@@ -1,79 +1,246 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Memory Match</title>
+  <title>Memory Match Pro</title>
   <style>
-    body { text-align: center; font-family: Arial; background: #f2f2f2; }
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #f97316, #ec4899);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 25px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+      width: 95%;
+      max-width: 700px;
+    }
+
+    h1 {
+      margin-top: 0;
+      color: #ec4899;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 20px 0;
+    }
+
+    .stat-card {
+      background: #fff7ed;
+      padding: 15px 20px;
+      border-radius: 15px;
+      min-width: 110px;
+    }
+
+    .stat-card h2 {
+      margin: 0;
+      color: #f97316;
+    }
+
+    select {
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 16px;
+      margin: 10px;
+    }
+
     .board {
       display: grid;
-      grid-template-columns: repeat(4, 90px);
       gap: 10px;
       justify-content: center;
-      margin-top: 30px;
+      margin: 25px 0;
     }
+
     .card {
-      width: 90px;
-      height: 90px;
+      width: 85px;
+      height: 85px;
       font-size: 35px;
-      background: royalblue;
+      background: linear-gradient(135deg, #f97316, #ec4899);
       color: white;
       border: none;
-      border-radius: 12px;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .card:hover {
+      transform: scale(1.05);
+    }
+
+    .card.flipped {
+      background: #fdf2f8;
+      color: #111827;
+      transform: rotateY(180deg);
+    }
+
+    .card.matched {
+      background: #bbf7d0;
+      color: #15803d;
+      cursor: default;
+    }
+
+    button, a {
+      display: inline-block;
+      margin: 8px 5px;
+      padding: 12px 18px;
+      border: none;
+      border-radius: 10px;
+      background: #ec4899;
+      color: white;
+      text-decoration: none;
+      font-size: 16px;
       cursor: pointer;
     }
-    button {
-      padding: 10px 20px;
-      margin-top: 20px;
+
+    button:hover, a:hover {
+      background: #db2777;
+    }
+
+    #message {
+      font-weight: bold;
       font-size: 18px;
+      min-height: 25px;
+    }
+
+    @media (max-width: 520px) {
+      .card {
+        width: 68px;
+        height: 68px;
+        font-size: 28px;
+      }
     }
   </style>
 </head>
 <body>
 
-<h1>🧠 Memory Match</h1>
-<p>Match all the emoji cards!</p>
-<p id="moves">Moves: 0</p>
+<div class="container">
+  <h1>🧠 Memory Match Pro</h1>
+  <p>Match all the cards with the fewest moves and fastest time!</p>
 
-<div class="board" id="board"></div>
+  <label for="difficulty">Difficulty:</label>
+  <select id="difficulty" onchange="startGame()">
+    <option value="easy">Easy</option>
+    <option value="medium" selected>Medium</option>
+    <option value="hard">Hard</option>
+  </select>
 
-<button onclick="startGame()">Restart</button>
-<br><br>
-<a href="index.html">⬅ Back to Home</a>
+  <div class="stats">
+    <div class="stat-card">
+      <h2 id="moves">0</h2>
+      <p>Moves</p>
+    </div>
+    <div class="stat-card">
+      <h2 id="timer">0</h2>
+      <p>Seconds</p>
+    </div>
+    <div class="stat-card">
+      <h2 id="best">--</h2>
+      <p>Best</p>
+    </div>
+  </div>
+
+  <div class="board" id="board"></div>
+
+  <div>
+    <button onclick="startGame()">Restart</button>
+    <button onclick="resetBest()">Reset Best</button>
+    <a href="index.html">⬅ Home</a>
+  </div>
+
+  <p id="message"></p>
+</div>
 
 <script>
-let emojis = ["🍎", "🍎", "🍌", "🍌", "🍇", "🍇", "🍒", "🍒", "🍕", "🍕", "⭐", "⭐", "🐶", "🐶", "🚗", "🚗"];
+const emojiSets = {
+  easy: ["🍎", "🍎", "🍌", "🍌", "🍇", "🍇", "🍒", "🍒"],
+  medium: ["🍎", "🍎", "🍌", "🍌", "🍇", "🍇", "🍒", "🍒", "🍕", "🍕", "⭐", "⭐", "🐶", "🐶", "🚗", "🚗"],
+  hard: ["🍎", "🍎", "🍌", "🍌", "🍇", "🍇", "🍒", "🍒", "🍕", "🍕", "⭐", "⭐", "🐶", "🐶", "🚗", "🚗", "🎵", "🎵", "🌈", "🌈"]
+};
+
+let cards = [];
 let firstCard = null;
 let secondCard = null;
 let lockBoard = false;
 let moves = 0;
 let matched = 0;
+let seconds = 0;
+let timerInterval;
+let gameStarted = false;
 
 function startGame() {
-  emojis.sort(() => Math.random() - 0.5);
-  document.getElementById("board").innerHTML = "";
+  clearInterval(timerInterval);
+
+  const difficulty = document.getElementById("difficulty").value;
+  cards = [...emojiSets[difficulty]].sort(() => Math.random() - 0.5);
+
   firstCard = null;
   secondCard = null;
   lockBoard = false;
   moves = 0;
   matched = 0;
-  document.getElementById("moves").innerText = "Moves: 0";
+  seconds = 0;
+  gameStarted = false;
 
-  for (let i = 0; i < emojis.length; i++) {
-    let card = document.createElement("button");
+  document.getElementById("moves").innerText = moves;
+  document.getElementById("timer").innerText = seconds;
+  document.getElementById("message").innerText = "";
+  updateBestDisplay();
+
+  const board = document.getElementById("board");
+  board.innerHTML = "";
+
+  if (difficulty === "easy") {
+    board.style.gridTemplateColumns = "repeat(4, 85px)";
+  } else if (difficulty === "hard") {
+    board.style.gridTemplateColumns = "repeat(5, 85px)";
+  } else {
+    board.style.gridTemplateColumns = "repeat(4, 85px)";
+  }
+
+  for (let i = 0; i < cards.length; i++) {
+    const card = document.createElement("button");
     card.className = "card";
     card.innerText = "?";
-    card.dataset.emoji = emojis[i];
+    card.dataset.emoji = cards[i];
+
     card.onclick = function() {
       flipCard(card);
     };
-    document.getElementById("board").appendChild(card);
+
+    board.appendChild(card);
   }
 }
 
+function startTimer() {
+  if (gameStarted) return;
+
+  gameStarted = true;
+  timerInterval = setInterval(() => {
+    seconds++;
+    document.getElementById("timer").innerText = seconds;
+  }, 1000);
+}
+
 function flipCard(card) {
-  if (lockBoard || card === firstCard || card.innerText !== "?") return;
+  if (lockBoard || card === firstCard || card.classList.contains("matched")) return;
+
+  startTimer();
 
   card.innerText = card.dataset.emoji;
+  card.classList.add("flipped");
 
   if (!firstCard) {
     firstCard = card;
@@ -82,26 +249,68 @@ function flipCard(card) {
 
   secondCard = card;
   moves++;
-  document.getElementById("moves").innerText = "Moves: " + moves;
+  document.getElementById("moves").innerText = moves;
 
   if (firstCard.dataset.emoji === secondCard.dataset.emoji) {
+    firstCard.classList.add("matched");
+    secondCard.classList.add("matched");
+
     matched += 2;
     firstCard = null;
     secondCard = null;
 
-    if (matched === emojis.length) {
-      setTimeout(() => alert("🎉 You matched all cards in " + moves + " moves!"), 300);
+    if (matched === cards.length) {
+      finishGame();
     }
   } else {
     lockBoard = true;
+
     setTimeout(() => {
       firstCard.innerText = "?";
       secondCard.innerText = "?";
+      firstCard.classList.remove("flipped");
+      secondCard.classList.remove("flipped");
+
       firstCard = null;
       secondCard = null;
       lockBoard = false;
     }, 800);
   }
+}
+
+function finishGame() {
+  clearInterval(timerInterval);
+
+  const difficulty = document.getElementById("difficulty").value;
+  const key = "memoryBest_" + difficulty;
+  const finalScore = moves + seconds;
+  const best = Number(localStorage.getItem(key));
+
+  if (!best || finalScore < best) {
+    localStorage.setItem(key, finalScore);
+    document.getElementById("message").innerText =
+      "🏆 New best! " + moves + " moves in " + seconds + " seconds!";
+  } else {
+    document.getElementById("message").innerText =
+      "🎉 You won in " + moves + " moves and " + seconds + " seconds!";
+  }
+
+  updateBestDisplay();
+}
+
+function updateBestDisplay() {
+  const difficulty = document.getElementById("difficulty").value;
+  const key = "memoryBest_" + difficulty;
+  const best = localStorage.getItem(key);
+
+  document.getElementById("best").innerText = best ? best : "--";
+}
+
+function resetBest() {
+  const difficulty = document.getElementById("difficulty").value;
+  localStorage.removeItem("memoryBest_" + difficulty);
+  updateBestDisplay();
+  document.getElementById("message").innerText = "Best score reset!";
 }
 
 startGame();
