@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Memory Match</title>
+  <style>
+    body { text-align: center; font-family: Arial; background: #f2f2f2; }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(4, 90px);
+      gap: 10px;
+      justify-content: center;
+      margin-top: 30px;
+    }
+    .card {
+      width: 90px;
+      height: 90px;
+      font-size: 35px;
+      background: royalblue;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    button {
+      padding: 10px 20px;
+      margin-top: 20px;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🧠 Memory Match</h1>
+<p>Match all the emoji cards!</p>
+<p id="moves">Moves: 0</p>
+
+<div class="board" id="board"></div>
+
+<button onclick="startGame()">Restart</button>
+<br><br>
+<a href="index.html">⬅ Back to Home</a>
+
+<script>
+let emojis = ["🍎", "🍎", "🍌", "🍌", "🍇", "🍇", "🍒", "🍒", "🍕", "🍕", "⭐", "⭐", "🐶", "🐶", "🚗", "🚗"];
+let firstCard = null;
+let secondCard = null;
+let lockBoard = false;
+let moves = 0;
+let matched = 0;
+
+function startGame() {
+  emojis.sort(() => Math.random() - 0.5);
+  document.getElementById("board").innerHTML = "";
+  firstCard = null;
+  secondCard = null;
+  lockBoard = false;
+  moves = 0;
+  matched = 0;
+  document.getElementById("moves").innerText = "Moves: 0";
+
+  for (let i = 0; i < emojis.length; i++) {
+    let card = document.createElement("button");
+    card.className = "card";
+    card.innerText = "?";
+    card.dataset.emoji = emojis[i];
+    card.onclick = function() {
+      flipCard(card);
+    };
+    document.getElementById("board").appendChild(card);
+  }
+}
+
+function flipCard(card) {
+  if (lockBoard || card === firstCard || card.innerText !== "?") return;
+
+  card.innerText = card.dataset.emoji;
+
+  if (!firstCard) {
+    firstCard = card;
+    return;
+  }
+
+  secondCard = card;
+  moves++;
+  document.getElementById("moves").innerText = "Moves: " + moves;
+
+  if (firstCard.dataset.emoji === secondCard.dataset.emoji) {
+    matched += 2;
+    firstCard = null;
+    secondCard = null;
+
+    if (matched === emojis.length) {
+      setTimeout(() => alert("🎉 You matched all cards in " + moves + " moves!"), 300);
+    }
+  } else {
+    lockBoard = true;
+    setTimeout(() => {
+      firstCard.innerText = "?";
+      secondCard.innerText = "?";
+      firstCard = null;
+      secondCard = null;
+      lockBoard = false;
+    }, 800);
+  }
+}
+
+startGame();
+</script>
+
+</body>
+</html>
