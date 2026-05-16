@@ -133,6 +133,8 @@
   <p id="hint"></p>
 </div>
 
+<script src="sounds.js"></script>
+
 <script>
 let secretNumber;
 let attempts = 0;
@@ -140,6 +142,12 @@ let maxNumber = 50;
 let gameOver = false;
 
 const guessInput = document.getElementById("guess");
+
+function safeSound(type) {
+  if (typeof playSound === "function") {
+    playSound(type);
+  }
+}
 
 guessInput.addEventListener("keydown", function(e) {
   if (e.key === "Enter") {
@@ -182,8 +190,11 @@ function checkGuess() {
   if (!guess || guess < 1 || guess > maxNumber) {
     document.getElementById("message").innerText =
       "⚠️ Enter a number between 1 and " + maxNumber;
+    safeSound("lose");
     return;
   }
+
+  safeSound("click");
 
   attempts++;
   document.getElementById("attempts").innerText = attempts;
@@ -195,12 +206,17 @@ function checkGuess() {
     document.getElementById("message").innerText =
       "🎉 Correct! You won in " + attempts + " attempts!";
 
+    safeSound("win");
     saveBestScore();
   } else if (guess < secretNumber) {
     document.getElementById("message").innerText = "📉 Too low! Try higher.";
+    document.getElementById("hint").innerText = "";
+    safeSound("lose");
     giveHint(guess);
   } else {
     document.getElementById("message").innerText = "📈 Too high! Try lower.";
+    document.getElementById("hint").innerText = "";
+    safeSound("lose");
     giveHint(guess);
   }
 
@@ -228,6 +244,7 @@ function saveBestScore() {
   if (!best || attempts < best) {
     localStorage.setItem(key, attempts);
     document.getElementById("hint").innerText = "🏆 New best score!";
+    safeSound("win");
   } else {
     document.getElementById("hint").innerText = "Nice win!";
   }
@@ -253,6 +270,5 @@ function resetBest() {
 startGame();
 </script>
 
-<script src="sounds.js"></script>
 </body>
 </html>
