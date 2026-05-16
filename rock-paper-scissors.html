@@ -139,9 +139,9 @@
   </div>
 
   <div class="choices">
-    <button class="choice-btn" onclick="play('rock', '🪨')">🪨 Rock</button>
-    <button class="choice-btn" onclick="play('paper', '📄')">📄 Paper</button>
-    <button class="choice-btn" onclick="play('scissors', '✂️')">✂️ Scissors</button>
+    <button class="choice-btn" onclick="play('rock')">🪨 Rock</button>
+    <button class="choice-btn" onclick="play('paper')">📄 Paper</button>
+    <button class="choice-btn" onclick="play('scissors')">✂️ Scissors</button>
   </div>
 
   <div class="battle">
@@ -156,6 +156,8 @@
   </div>
 </div>
 
+<script src="sounds.js"></script>
+
 <script>
 let wins = Number(localStorage.getItem("rpsWins")) || 0;
 let losses = Number(localStorage.getItem("rpsLosses")) || 0;
@@ -169,9 +171,17 @@ const emojis = {
   scissors: "✂️"
 };
 
+function safeSound(type) {
+  if (typeof playSound === "function") {
+    playSound(type);
+  }
+}
+
 updateStats();
 
 function play(playerChoice) {
+  safeSound("click");
+
   const choices = ["rock", "paper", "scissors"];
   const computerChoice =
     choices[Math.floor(Math.random() * choices.length)];
@@ -187,6 +197,7 @@ function play(playerChoice) {
   if (playerChoice === computerChoice) {
     ties++;
     resultText = "🤝 It's a Tie!";
+    safeSound("score");
   } else if (
     (playerChoice === "rock" && computerChoice === "scissors") ||
     (playerChoice === "paper" && computerChoice === "rock") ||
@@ -199,10 +210,13 @@ function play(playerChoice) {
     if (currentStreak > bestStreak) {
       bestStreak = currentStreak;
     }
+
+    safeSound("win");
   } else {
     losses++;
     currentStreak = 0;
     resultText = "💻 Computer Wins!";
+    safeSound("lose");
   }
 
   document.getElementById("result").innerText = resultText;
@@ -246,6 +260,5 @@ function capitalize(word) {
 }
 </script>
 
-<script src="sounds.js"></script>
 </body>
 </html>
