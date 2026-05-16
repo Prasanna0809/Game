@@ -1,99 +1,353 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Pong</title>
+  <title>Pong Pro</title>
   <style>
-    body { text-align:center; font-family:Arial; background:#f2f2f2; }
-    canvas { background:#111; margin-top:20px; }
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #0f172a, #2563eb);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      color: #111827;
+    }
+
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 25px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+      width: 95%;
+      max-width: 760px;
+    }
+
+    h1 {
+      margin-top: 0;
+      color: #2563eb;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+
+    .card {
+      background: #eff6ff;
+      padding: 15px 25px;
+      border-radius: 15px;
+      min-width: 130px;
+    }
+
+    .card h2 {
+      margin: 0;
+      color: #1d4ed8;
+    }
+
+    canvas {
+      background: #020617;
+      border-radius: 15px;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    button, a {
+      display: inline-block;
+      margin: 10px 5px;
+      padding: 12px 18px;
+      border: none;
+      border-radius: 10px;
+      background: #2563eb;
+      color: white;
+      text-decoration: none;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover, a:hover {
+      background: #1d4ed8;
+    }
+
+    select {
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 16px;
+      margin: 10px;
+    }
+
+    .mobile-controls {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .mobile-controls button {
+      font-size: 22px;
+      padding: 14px 25px;
+    }
   </style>
 </head>
 <body>
 
-<h1>🏓 Pong</h1>
-<p>Move your mouse up and down.</p>
-<canvas id="game" width="600" height="400"></canvas>
-<p id="score">Player: 0 | Computer: 0</p>
-<a href="index.html">⬅ Back to Home</a>
+<div class="container">
+  <h1>🏓 Pong Pro</h1>
+  <p>Move your mouse, use arrow keys, or use mobile buttons.</p>
+
+  <label for="difficulty">Difficulty:</label>
+  <select id="difficulty" onchange="restartGame()">
+    <option value="easy">Easy</option>
+    <option value="medium" selected>Medium</option>
+    <option value="hard">Hard</option>
+  </select>
+
+  <div class="stats">
+    <div class="card">
+      <h2 id="playerScore">0</h2>
+      <p>Player</p>
+    </div>
+    <div class="card">
+      <h2 id="computerScore">0</h2>
+      <p>Computer</p>
+    </div>
+    <div class="card">
+      <h2 id="bestScore">0</h2>
+      <p>Best Win Streak</p>
+    </div>
+  </div>
+
+  <canvas id="game" width="600" height="400"></canvas>
+
+  <div>
+    <button onclick="restartGame()">Restart</button>
+    <button onclick="togglePause()">Pause / Resume</button>
+    <a href="index.html">⬅ Home</a>
+  </div>
+
+  <div class="mobile-controls">
+    <button onclick="movePlayer(-40)">⬆</button>
+    <button onclick="movePlayer(40)">⬇</button>
+  </div>
+
+  <p id="message"></p>
+</div>
 
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-let playerY = 160;
-let computerY = 160;
-let paddleW = 10;
-let paddleH = 80;
+let playerY;
+let computerY;
+let paddleW = 12;
+let paddleH = 85;
 
-let ballX = 300;
-let ballY = 200;
-let ballDX = 4;
-let ballDY = 3;
+let ballX;
+let ballY;
+let ballDX;
+let ballDY;
+let ballRadius = 10;
 
-let playerScore = 0;
-let computerScore = 0;
+let playerScore;
+let computerScore;
+let winStreak = 0;
+let bestScore = localStorage.getItem("pongBestScore") || 0;
+
+let paused = false;
+let animationId;
+let computerSpeed = 0.08;
+
+document.getElementById("bestScore").innerText = bestScore;
 
 canvas.addEventListener("mousemove", function(e) {
   let rect = canvas.getBoundingClientRect();
   playerY = e.clientY - rect.top - paddleH / 2;
+  keepPlayerInBounds();
 });
 
+document.addEventListener("keydown", function(e) {
+  if (e.key === "ArrowUp") movePlayer(-35);
+  if (e.key === "ArrowDown") movePlayer(35);
+  if (e.key === " ") togglePause();
+});
+
+function setDifficulty() {
+  let difficulty = document.getElementById("difficulty").value;
+
+  if (difficulty === "easy") {
+    computerSpeed = 0.06;
+  } else if (difficulty === "hard") {
+    computerSpeed = 0.12;
+  } else {
+    computerSpeed = 0.08;
+  }
+}
+
+function startGame() {
+  setDifficulty();
+
+  playerY = 160;
+  computerY = 160;
+  ballX = 300;
+  ballY = 200;
+  ballDX = 4;
+  ballDY = 3;
+  playerScore = 0;
+  computerScore = 0;
+  winStreak = 0;
+  paused = false;
+
+  updateScore();
+
+  cancelAnimationFrame(animationId);
+  draw();
+}
+
 function draw() {
-  ctx.clearRect(0, 0, 600, 400);
+  if (paused) {
+    animationId = requestAnimationFrame(draw);
+    return;
+  }
 
-  ctx.fillStyle = "white";
-  ctx.fillRect(20, playerY, paddleW, paddleH);
-  ctx.fillRect(570, computerY, paddleW, paddleH);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  drawCourt();
+  drawPaddles();
+  drawBall();
+
+  moveBall();
+  moveComputer();
+  checkCollisions();
+
+  updateScore();
+
+  animationId = requestAnimationFrame(draw);
+}
+
+function drawCourt() {
+  ctx.strokeStyle = "#334155";
+  ctx.setLineDash([10, 10]);
   ctx.beginPath();
-  ctx.arc(ballX, ballY, 10, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.moveTo(canvas.width / 2, 0);
+  ctx.lineTo(canvas.width / 2, canvas.height);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
 
+function drawPaddles() {
+  ctx.fillStyle = "#38bdf8";
+  ctx.fillRect(20, playerY, paddleW, paddleH);
+
+  ctx.fillStyle = "#f97316";
+  ctx.fillRect(canvas.width - 32, computerY, paddleW, paddleH);
+}
+
+function drawBall() {
+  ctx.fillStyle = "white";
+  ctx.beginPath();
+  ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function moveBall() {
   ballX += ballDX;
   ballY += ballDY;
 
-  if (ballY < 0 || ballY > 400) ballDY *= -1;
+  if (ballY < ballRadius || ballY > canvas.height - ballRadius) {
+    ballDY *= -1;
+  }
+}
 
-  computerY += (ballY - (computerY + paddleH / 2)) * 0.08;
+function moveComputer() {
+  computerY += (ballY - (computerY + paddleH / 2)) * computerSpeed;
 
+  if (computerY < 0) computerY = 0;
+  if (computerY + paddleH > canvas.height) {
+    computerY = canvas.height - paddleH;
+  }
+}
+
+function checkCollisions() {
   if (
-    ballX < 30 &&
+    ballX - ballRadius < 20 + paddleW &&
     ballY > playerY &&
     ballY < playerY + paddleH
   ) {
-    ballDX *= -1;
+    ballDX = Math.abs(ballDX) + 0.2;
+    ballDY += (ballY - (playerY + paddleH / 2)) * 0.08;
   }
 
   if (
-    ballX > 560 &&
+    ballX + ballRadius > canvas.width - 32 &&
     ballY > computerY &&
     ballY < computerY + paddleH
   ) {
-    ballDX *= -1;
+    ballDX = -Math.abs(ballDX) - 0.2;
+    ballDY += (ballY - (computerY + paddleH / 2)) * 0.08;
   }
 
   if (ballX < 0) {
     computerScore++;
+    winStreak = 0;
+    document.getElementById("message").innerText = "Computer scored!";
     resetBall();
   }
 
-  if (ballX > 600) {
+  if (ballX > canvas.width) {
     playerScore++;
+    winStreak++;
+    document.getElementById("message").innerText = "You scored! 🔥";
+
+    if (winStreak > bestScore) {
+      bestScore = winStreak;
+      localStorage.setItem("pongBestScore", bestScore);
+      document.getElementById("bestScore").innerText = bestScore;
+    }
+
     resetBall();
   }
-
-  document.getElementById("score").innerText =
-    "Player: " + playerScore + " | Computer: " + computerScore;
-
-  requestAnimationFrame(draw);
 }
 
 function resetBall() {
-  ballX = 300;
-  ballY = 200;
-  ballDX *= -1;
-  ballDY = 3;
+  ballX = canvas.width / 2;
+  ballY = canvas.height / 2;
+  ballDX = ballDX > 0 ? -4 : 4;
+  ballDY = Math.random() > 0.5 ? 3 : -3;
 }
 
-draw();
+function updateScore() {
+  document.getElementById("playerScore").innerText = playerScore;
+  document.getElementById("computerScore").innerText = computerScore;
+}
+
+function movePlayer(amount) {
+  playerY += amount;
+  keepPlayerInBounds();
+}
+
+function keepPlayerInBounds() {
+  if (playerY < 0) playerY = 0;
+  if (playerY + paddleH > canvas.height) {
+    playerY = canvas.height - paddleH;
+  }
+}
+
+function restartGame() {
+  document.getElementById("message").innerText = "";
+  startGame();
+}
+
+function togglePause() {
+  paused = !paused;
+}
+
+startGame();
 </script>
 
 </body>
