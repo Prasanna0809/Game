@@ -83,10 +83,6 @@
       background: #16a34a !important;
     }
 
-    .disabled {
-      background: #9ca3af !important;
-    }
-
     button, a {
       display: inline-block;
       margin: 10px 5px;
@@ -151,6 +147,8 @@
   <p id="message">Click Start to begin.</p>
 </div>
 
+<script src="sounds.js"></script>
+
 <script>
 let startTime;
 let timeoutId;
@@ -158,6 +156,12 @@ let state = "idle";
 let attempts = 0;
 
 const button = document.getElementById("reactionButton");
+
+function safeSound(type) {
+  if (typeof playSound === "function") {
+    playSound(type);
+  }
+}
 
 function getDelay() {
   const difficulty = document.getElementById("difficulty").value;
@@ -175,6 +179,7 @@ function getDelay() {
 
 function handleClick() {
   if (state === "idle") {
+    safeSound("click");
     startRound();
     return;
   }
@@ -195,7 +200,8 @@ function startRound() {
   state = "waiting";
   button.innerText = "Wait...";
   button.className = "waiting";
-  document.getElementById("message").innerText = "Wait for green. Don't click early!";
+  document.getElementById("message").innerText =
+    "Wait for green. Don't click early!";
 
   const delay = getDelay();
 
@@ -205,6 +211,7 @@ function startRound() {
     button.className = "ready";
     startTime = Date.now();
     document.getElementById("message").innerText = "Click now!";
+    safeSound("score");
   }, delay);
 }
 
@@ -215,13 +222,17 @@ function finishRound() {
   document.getElementById("lastTime").innerText = reactionTime + "ms";
   document.getElementById("attempts").innerText = attempts;
 
-  saveBest(reactionTime);
+  const isNewBest = saveBest(reactionTime);
 
   state = "idle";
   button.innerText = "Start Again";
   button.className = "";
-  document.getElementById("message").innerText =
-    "⚡ Your reaction time was " + reactionTime + "ms!";
+
+  if (!isNewBest) {
+    document.getElementById("message").innerText =
+      "⚡ Your reaction time was " + reactionTime + "ms!";
+    safeSound("win");
+  }
 }
 
 function falseStart() {
@@ -235,6 +246,8 @@ function falseStart() {
   button.className = "";
   document.getElementById("message").innerText =
     "🚫 Too early! Wait for green.";
+
+  safeSound("lose");
 }
 
 function saveBest(time) {
@@ -247,8 +260,11 @@ function saveBest(time) {
     document.getElementById("bestTime").innerText = time + "ms";
     document.getElementById("message").innerText =
       "🏆 New best reaction time: " + time + "ms!";
+    safeSound("win");
+    return true;
   } else {
     updateBestDisplay();
+    return false;
   }
 }
 
@@ -257,7 +273,8 @@ function updateBestDisplay() {
   const key = "reactionBest_" + difficulty;
   const best = localStorage.getItem(key);
 
-  document.getElementById("bestTime").innerText = best ? best + "ms" : "--";
+  document.getElementById("bestTime").innerText =
+    best ? best + "ms" : "--";
 }
 
 function resetGame() {
@@ -286,6 +303,5 @@ function resetBest() {
 resetGame();
 </script>
 
-<script src="sounds.js"></script>
 </body>
 </html>
