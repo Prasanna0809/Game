@@ -1,97 +1,307 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Tic Tac Toe</title>
+  <title>Tic Tac Toe Pro</title>
   <style>
-    body { text-align: center; font-family: Arial; background: #f2f2f2; }
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #06b6d4, #3b82f6);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .container {
+      background: white;
+      padding: 35px;
+      border-radius: 25px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+      width: 90%;
+      max-width: 560px;
+    }
+
+    h1 {
+      margin-top: 0;
+      color: #2563eb;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 20px 0;
+    }
+
+    .card {
+      background: #eff6ff;
+      padding: 15px 20px;
+      border-radius: 15px;
+      min-width: 100px;
+    }
+
+    .card h2 {
+      margin: 0;
+      color: #2563eb;
+    }
+
+    select {
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 16px;
+      margin: 10px;
+    }
+
     .board {
       display: grid;
-      grid-template-columns: repeat(3, 100px);
+      grid-template-columns: repeat(3, 95px);
       gap: 10px;
       justify-content: center;
-      margin-top: 30px;
+      margin: 25px 0;
     }
+
     .cell {
-      width: 100px;
-      height: 100px;
-      font-size: 40px;
-      background: white;
-      border: 2px solid black;
+      width: 95px;
+      height: 95px;
+      font-size: 42px;
+      font-weight: bold;
+      border: none;
+      border-radius: 18px;
+      background: #f8fafc;
+      color: #2563eb;
+      box-shadow: inset 0 0 0 3px #dbeafe;
+      cursor: pointer;
+      transition: transform 0.12s ease, background 0.12s ease;
+    }
+
+    .cell:hover {
+      transform: scale(1.05);
+      background: #eff6ff;
+    }
+
+    .winning-cell {
+      background: #bbf7d0 !important;
+      color: #15803d !important;
+      box-shadow: inset 0 0 0 3px #22c55e;
+    }
+
+    .controls button, a {
+      display: inline-block;
+      margin: 8px 5px;
+      padding: 12px 18px;
+      border: none;
+      border-radius: 10px;
+      background: #2563eb;
+      color: white;
+      text-decoration: none;
+      font-size: 16px;
       cursor: pointer;
     }
-    button {
-      padding: 10px 20px;
-      margin-top: 20px;
-      font-size: 18px;
+
+    .controls button:hover, a:hover {
+      background: #1d4ed8;
+    }
+
+    #status {
+      font-size: 20px;
+      font-weight: bold;
+      min-height: 28px;
     }
   </style>
 </head>
 <body>
 
-<h1>⭕ Tic Tac Toe ❌</h1>
-<p id="status">Player X's turn</p>
+<div class="container">
+  <h1>⭕ Tic Tac Toe Pro ❌</h1>
 
-<div class="board">
-  <button class="cell" onclick="makeMove(0)"></button>
-  <button class="cell" onclick="makeMove(1)"></button>
-  <button class="cell" onclick="makeMove(2)"></button>
-  <button class="cell" onclick="makeMove(3)"></button>
-  <button class="cell" onclick="makeMove(4)"></button>
-  <button class="cell" onclick="makeMove(5)"></button>
-  <button class="cell" onclick="makeMove(6)"></button>
-  <button class="cell" onclick="makeMove(7)"></button>
-  <button class="cell" onclick="makeMove(8)"></button>
+  <label for="mode">Mode:</label>
+  <select id="mode" onchange="resetGame()">
+    <option value="friend">2 Players</option>
+    <option value="computer">Play Computer</option>
+  </select>
+
+  <div class="stats">
+    <div class="card">
+      <h2 id="xWins">0</h2>
+      <p>X Wins</p>
+    </div>
+    <div class="card">
+      <h2 id="oWins">0</h2>
+      <p>O Wins</p>
+    </div>
+    <div class="card">
+      <h2 id="ties">0</h2>
+      <p>Ties</p>
+    </div>
+  </div>
+
+  <p id="status">Player X's turn</p>
+
+  <div class="board">
+    <button class="cell" onclick="makeMove(0)"></button>
+    <button class="cell" onclick="makeMove(1)"></button>
+    <button class="cell" onclick="makeMove(2)"></button>
+    <button class="cell" onclick="makeMove(3)"></button>
+    <button class="cell" onclick="makeMove(4)"></button>
+    <button class="cell" onclick="makeMove(5)"></button>
+    <button class="cell" onclick="makeMove(6)"></button>
+    <button class="cell" onclick="makeMove(7)"></button>
+    <button class="cell" onclick="makeMove(8)"></button>
+  </div>
+
+  <div class="controls">
+    <button onclick="resetGame()">Restart Round</button>
+    <button onclick="resetStats()">Reset Stats</button>
+    <a href="index.html">⬅ Home</a>
+  </div>
 </div>
-
-<button onclick="resetGame()">Restart</button>
-<br><br>
-<a href="index.html">⬅ Back to Home</a>
 
 <script>
 let board = ["", "", "", "", "", "", "", "", ""];
 let currentPlayer = "X";
 let gameOver = false;
 
+let xWins = Number(localStorage.getItem("tttXWins")) || 0;
+let oWins = Number(localStorage.getItem("tttOWins")) || 0;
+let ties = Number(localStorage.getItem("tttTies")) || 0;
+
+const cells = document.getElementsByClassName("cell");
+const winCombos = [
+  [0,1,2], [3,4,5], [6,7,8],
+  [0,3,6], [1,4,7], [2,5,8],
+  [0,4,8], [2,4,6]
+];
+
+updateStats();
+
 function makeMove(index) {
   if (board[index] !== "" || gameOver) return;
 
   board[index] = currentPlayer;
-  document.getElementsByClassName("cell")[index].innerText = currentPlayer;
+  cells[index].innerText = currentPlayer;
 
-  if (checkWinner()) {
-    document.getElementById("status").innerText = "🎉 Player " + currentPlayer + " wins!";
+  let winnerCombo = getWinnerCombo();
+
+  if (winnerCombo) {
+    endRound(currentPlayer, winnerCombo);
+    return;
+  }
+
+  if (!board.includes("")) {
+    ties++;
+    saveStats();
+    updateStats();
+    document.getElementById("status").innerText = "🤝 It's a tie!";
     gameOver = true;
-  } else if (!board.includes("")) {
-    document.getElementById("status").innerText = "It's a tie!";
-    gameOver = true;
-  } else {
-    currentPlayer = currentPlayer === "X" ? "O" : "X";
-    document.getElementById("status").innerText = "Player " + currentPlayer + "'s turn";
+    return;
+  }
+
+  currentPlayer = currentPlayer === "X" ? "O" : "X";
+  document.getElementById("status").innerText = "Player " + currentPlayer + "'s turn";
+
+  if (document.getElementById("mode").value === "computer" && currentPlayer === "O") {
+    setTimeout(computerMove, 400);
   }
 }
 
-function checkWinner() {
-  let wins = [
-    [0,1,2], [3,4,5], [6,7,8],
-    [0,3,6], [1,4,7], [2,5,8],
-    [0,4,8], [2,4,6]
-  ];
+function computerMove() {
+  if (gameOver) return;
 
-  return wins.some(combo => {
+  let move = findBestMove("O");
+
+  if (move === null) {
+    move = findBestMove("X");
+  }
+
+  if (move === null) {
+    let emptyCells = board
+      .map((value, index) => value === "" ? index : null)
+      .filter(value => value !== null);
+
+    move = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+  }
+
+  makeMove(move);
+}
+
+function findBestMove(player) {
+  for (let combo of winCombos) {
+    let values = combo.map(index => board[index]);
+    let playerCount = values.filter(value => value === player).length;
+    let emptyCount = values.filter(value => value === "").length;
+
+    if (playerCount === 2 && emptyCount === 1) {
+      return combo[values.indexOf("")];
+    }
+  }
+
+  if (board[4] === "") return 4;
+
+  return null;
+}
+
+function getWinnerCombo() {
+  return winCombos.find(combo => {
     return combo.every(index => board[index] === currentPlayer);
   });
+}
+
+function endRound(winner, combo) {
+  gameOver = true;
+
+  combo.forEach(index => {
+    cells[index].classList.add("winning-cell");
+  });
+
+  if (winner === "X") {
+    xWins++;
+  } else {
+    oWins++;
+  }
+
+  saveStats();
+  updateStats();
+
+  document.getElementById("status").innerText = "🎉 Player " + winner + " wins!";
 }
 
 function resetGame() {
   board = ["", "", "", "", "", "", "", "", ""];
   currentPlayer = "X";
   gameOver = false;
+
   document.getElementById("status").innerText = "Player X's turn";
 
-  let cells = document.getElementsByClassName("cell");
   for (let i = 0; i < cells.length; i++) {
     cells[i].innerText = "";
+    cells[i].classList.remove("winning-cell");
   }
+}
+
+function resetStats() {
+  xWins = 0;
+  oWins = 0;
+  ties = 0;
+  saveStats();
+  updateStats();
+  resetGame();
+}
+
+function updateStats() {
+  document.getElementById("xWins").innerText = xWins;
+  document.getElementById("oWins").innerText = oWins;
+  document.getElementById("ties").innerText = ties;
+}
+
+function saveStats() {
+  localStorage.setItem("tttXWins", xWins);
+  localStorage.setItem("tttOWins", oWins);
+  localStorage.setItem("tttTies", ties);
 }
 </script>
 
