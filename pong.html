@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pong</title>
+  <style>
+    body { text-align:center; font-family:Arial; background:#f2f2f2; }
+    canvas { background:#111; margin-top:20px; }
+  </style>
+</head>
+<body>
+
+<h1>🏓 Pong</h1>
+<p>Move your mouse up and down.</p>
+<canvas id="game" width="600" height="400"></canvas>
+<p id="score">Player: 0 | Computer: 0</p>
+<a href="index.html">⬅ Back to Home</a>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let playerY = 160;
+let computerY = 160;
+let paddleW = 10;
+let paddleH = 80;
+
+let ballX = 300;
+let ballY = 200;
+let ballDX = 4;
+let ballDY = 3;
+
+let playerScore = 0;
+let computerScore = 0;
+
+canvas.addEventListener("mousemove", function(e) {
+  let rect = canvas.getBoundingClientRect();
+  playerY = e.clientY - rect.top - paddleH / 2;
+});
+
+function draw() {
+  ctx.clearRect(0, 0, 600, 400);
+
+  ctx.fillStyle = "white";
+  ctx.fillRect(20, playerY, paddleW, paddleH);
+  ctx.fillRect(570, computerY, paddleW, paddleH);
+  ctx.beginPath();
+  ctx.arc(ballX, ballY, 10, 0, Math.PI * 2);
+  ctx.fill();
+
+  ballX += ballDX;
+  ballY += ballDY;
+
+  if (ballY < 0 || ballY > 400) ballDY *= -1;
+
+  computerY += (ballY - (computerY + paddleH / 2)) * 0.08;
+
+  if (
+    ballX < 30 &&
+    ballY > playerY &&
+    ballY < playerY + paddleH
+  ) {
+    ballDX *= -1;
+  }
+
+  if (
+    ballX > 560 &&
+    ballY > computerY &&
+    ballY < computerY + paddleH
+  ) {
+    ballDX *= -1;
+  }
+
+  if (ballX < 0) {
+    computerScore++;
+    resetBall();
+  }
+
+  if (ballX > 600) {
+    playerScore++;
+    resetBall();
+  }
+
+  document.getElementById("score").innerText =
+    "Player: " + playerScore + " | Computer: " + computerScore;
+
+  requestAnimationFrame(draw);
+}
+
+function resetBall() {
+  ballX = 300;
+  ballY = 200;
+  ballDX *= -1;
+  ballDY = 3;
+}
+
+draw();
+</script>
+
+</body>
+</html>
