@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Pong Pro</title>
+  <title>Vertical Pong Pro</title>
   <style>
     * { box-sizing: border-box; }
 
@@ -26,10 +26,7 @@
       max-width: 760px;
     }
 
-    h1 {
-      margin-top: 0;
-      color: #2563eb;
-    }
+    h1 { color: #2563eb; margin-top: 0; }
 
     .stats {
       display: flex;
@@ -46,10 +43,7 @@
       min-width: 130px;
     }
 
-    .card h2 {
-      margin: 0;
-      color: #1d4ed8;
-    }
+    .card h2 { margin: 0; color: #1d4ed8; }
 
     canvas {
       background: #020617;
@@ -71,9 +65,7 @@
       cursor: pointer;
     }
 
-    button:hover, a:hover {
-      background: #1d4ed8;
-    }
+    button:hover, a:hover { background: #1d4ed8; }
 
     select {
       padding: 10px;
@@ -98,8 +90,8 @@
 <body>
 
 <div class="container">
-  <h1>🏓 Pong Pro</h1>
-  <p>Move your mouse, use arrow keys, or use mobile buttons.</p>
+  <h1>🏓 Vertical Pong Pro</h1>
+  <p>Computer is on top. You are at the bottom. Move left and right!</p>
 
   <label for="difficulty">Difficulty:</label>
   <select id="difficulty" onchange="restartGame()">
@@ -119,7 +111,7 @@
     </div>
     <div class="card">
       <h2 id="bestScore">0</h2>
-      <p>Best Win Streak</p>
+      <p>Best Streak</p>
     </div>
   </div>
 
@@ -132,8 +124,8 @@
   </div>
 
   <div class="mobile-controls">
-    <button onclick="movePlayer(-40)">⬆</button>
-    <button onclick="movePlayer(40)">⬇</button>
+    <button onclick="movePlayer(-45)">⬅</button>
+    <button onclick="movePlayer(45)">➡</button>
   </div>
 
   <p id="message"></p>
@@ -143,10 +135,11 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-let playerY;
-let computerY;
-let paddleW = 12;
-let paddleH = 85;
+let paddleW = 100;
+let paddleH = 12;
+
+let playerX;
+let computerX;
 
 let ballX;
 let ballY;
@@ -157,7 +150,7 @@ let ballRadius = 10;
 let playerScore;
 let computerScore;
 let winStreak = 0;
-let bestScore = localStorage.getItem("pongBestScore") || 0;
+let bestScore = localStorage.getItem("verticalPongBestScore") || 0;
 
 let paused = false;
 let animationId;
@@ -165,39 +158,37 @@ let computerSpeed = 0.08;
 
 document.getElementById("bestScore").innerText = bestScore;
 
-canvas.addEventListener("mousemove", function(e) {
-  let rect = canvas.getBoundingClientRect();
-  playerY = e.clientY - rect.top - paddleH / 2;
-  keepPlayerInBounds();
+document.addEventListener("keydown", function(e) {
+  if (e.key === "ArrowLeft") movePlayer(-35);
+  if (e.key === "ArrowRight") movePlayer(35);
+  if (e.key === " ") togglePause();
 });
 
-document.addEventListener("keydown", function(e) {
-  if (e.key === "ArrowUp") movePlayer(-35);
-  if (e.key === "ArrowDown") movePlayer(35);
-  if (e.key === " ") togglePause();
+canvas.addEventListener("mousemove", function(e) {
+  let rect = canvas.getBoundingClientRect();
+  playerX = e.clientX - rect.left - paddleW / 2;
+  keepPlayerInBounds();
 });
 
 function setDifficulty() {
   let difficulty = document.getElementById("difficulty").value;
 
-  if (difficulty === "easy") {
-    computerSpeed = 0.06;
-  } else if (difficulty === "hard") {
-    computerSpeed = 0.12;
-  } else {
-    computerSpeed = 0.08;
-  }
+  if (difficulty === "easy") computerSpeed = 0.05;
+  else if (difficulty === "hard") computerSpeed = 0.13;
+  else computerSpeed = 0.08;
 }
 
 function startGame() {
   setDifficulty();
 
-  playerY = 160;
-  computerY = 160;
-  ballX = 300;
-  ballY = 200;
-  ballDX = 4;
-  ballDY = 3;
+  playerX = canvas.width / 2 - paddleW / 2;
+  computerX = canvas.width / 2 - paddleW / 2;
+
+  ballX = canvas.width / 2;
+  ballY = canvas.height / 2;
+  ballDX = 3;
+  ballDY = 4;
+
   playerScore = 0;
   computerScore = 0;
   winStreak = 0;
@@ -234,18 +225,18 @@ function drawCourt() {
   ctx.strokeStyle = "#334155";
   ctx.setLineDash([10, 10]);
   ctx.beginPath();
-  ctx.moveTo(canvas.width / 2, 0);
-  ctx.lineTo(canvas.width / 2, canvas.height);
+  ctx.moveTo(0, canvas.height / 2);
+  ctx.lineTo(canvas.width, canvas.height / 2);
   ctx.stroke();
   ctx.setLineDash([]);
 }
 
 function drawPaddles() {
-  ctx.fillStyle = "#38bdf8";
-  ctx.fillRect(20, playerY, paddleW, paddleH);
-
   ctx.fillStyle = "#f97316";
-  ctx.fillRect(canvas.width - 32, computerY, paddleW, paddleH);
+  ctx.fillRect(computerX, 20, paddleW, paddleH);
+
+  ctx.fillStyle = "#38bdf8";
+  ctx.fillRect(playerX, canvas.height - 32, paddleW, paddleH);
 }
 
 function drawBall() {
@@ -259,66 +250,66 @@ function moveBall() {
   ballX += ballDX;
   ballY += ballDY;
 
-  if (ballY < ballRadius || ballY > canvas.height - ballRadius) {
-    ballDY *= -1;
+  if (ballX < ballRadius || ballX > canvas.width - ballRadius) {
+    ballDX *= -1;
   }
 }
 
 function moveComputer() {
-  computerY += (ballY - (computerY + paddleH / 2)) * computerSpeed;
+  computerX += (ballX - (computerX + paddleW / 2)) * computerSpeed;
 
-  if (computerY < 0) computerY = 0;
-  if (computerY + paddleH > canvas.height) {
-    computerY = canvas.height - paddleH;
+  if (computerX < 0) computerX = 0;
+  if (computerX + paddleW > canvas.width) {
+    computerX = canvas.width - paddleW;
   }
 }
 
 function checkCollisions() {
   if (
-    ballX - ballRadius < 20 + paddleW &&
-    ballY > playerY &&
-    ballY < playerY + paddleH
+    ballY - ballRadius < 20 + paddleH &&
+    ballX > computerX &&
+    ballX < computerX + paddleW
   ) {
-    ballDX = Math.abs(ballDX) + 0.2;
-    ballDY += (ballY - (playerY + paddleH / 2)) * 0.08;
+    ballDY = Math.abs(ballDY) + 0.15;
+    ballDX += (ballX - (computerX + paddleW / 2)) * 0.04;
   }
 
   if (
-    ballX + ballRadius > canvas.width - 32 &&
-    ballY > computerY &&
-    ballY < computerY + paddleH
+    ballY + ballRadius > canvas.height - 32 &&
+    ballX > playerX &&
+    ballX < playerX + paddleW
   ) {
-    ballDX = -Math.abs(ballDX) - 0.2;
-    ballDY += (ballY - (computerY + paddleH / 2)) * 0.08;
+    ballDY = -Math.abs(ballDY) - 0.15;
+    ballDX += (ballX - (playerX + paddleW / 2)) * 0.04;
   }
 
-  if (ballX < 0) {
-    computerScore++;
-    winStreak = 0;
-    document.getElementById("message").innerText = "Computer scored!";
-    resetBall();
-  }
-
-  if (ballX > canvas.width) {
+  if (ballY < 0) {
     playerScore++;
     winStreak++;
     document.getElementById("message").innerText = "You scored! 🔥";
 
     if (winStreak > bestScore) {
       bestScore = winStreak;
-      localStorage.setItem("pongBestScore", bestScore);
+      localStorage.setItem("verticalPongBestScore", bestScore);
       document.getElementById("bestScore").innerText = bestScore;
     }
 
-    resetBall();
+    resetBall(1);
+  }
+
+  if (ballY > canvas.height) {
+    computerScore++;
+    winStreak = 0;
+    document.getElementById("message").innerText = "Computer scored!";
+    resetBall(-1);
   }
 }
 
-function resetBall() {
+function resetBall(direction) {
   ballX = canvas.width / 2;
   ballY = canvas.height / 2;
-  ballDX = ballDX > 0 ? -4 : 4;
-  ballDY = Math.random() > 0.5 ? 3 : -3;
+  ballDX = Math.random() > 0.5 ? 3 : -3;
+  ballDY = 4 * direction;
 }
 
 function updateScore() {
@@ -327,14 +318,14 @@ function updateScore() {
 }
 
 function movePlayer(amount) {
-  playerY += amount;
+  playerX += amount;
   keepPlayerInBounds();
 }
 
 function keepPlayerInBounds() {
-  if (playerY < 0) playerY = 0;
-  if (playerY + paddleH > canvas.height) {
-    playerY = canvas.height - paddleH;
+  if (playerX < 0) playerX = 0;
+  if (playerX + paddleW > canvas.width) {
+    playerX = canvas.width - paddleW;
   }
 }
 
