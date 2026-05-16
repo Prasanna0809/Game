@@ -158,7 +158,18 @@ function safeSound(type) {
   }
 }
 
+// FIX: Prevent page scrolling when using arrow keys and spacebar
 document.addEventListener("keydown", function(e) {
+  if (
+    e.key === "ArrowUp" ||
+    e.key === "ArrowDown" ||
+    e.key === "ArrowLeft" ||
+    e.key === "ArrowRight" ||
+    e.key === " "
+  ) {
+    e.preventDefault();
+  }
+
   if (e.key === "ArrowUp") setDirection("up");
   if (e.key === "ArrowDown") setDirection("down");
   if (e.key === "ArrowLeft") setDirection("left");
@@ -167,7 +178,7 @@ document.addEventListener("keydown", function(e) {
 });
 
 function startGame() {
-  snake = [{x: 200, y: 200}];
+  snake = [{ x: 200, y: 200 }];
   food = randomFood();
   dx = box;
   dy = 0;
@@ -217,11 +228,13 @@ function draw() {
 
   drawGrid();
 
+  // Food
   ctx.fillStyle = "#ef4444";
   ctx.beginPath();
   ctx.arc(food.x + box / 2, food.y + box / 2, box / 2 - 2, 0, Math.PI * 2);
   ctx.fill();
 
+  // Snake
   snake.forEach((part, index) => {
     ctx.fillStyle = index === 0 ? "#22c55e" : "#86efac";
     ctx.fillRect(part.x, part.y, box - 2, box - 2);
@@ -232,6 +245,7 @@ function draw() {
     y: snake[0].y + dy
   };
 
+  // Collision detection
   if (
     head.x < 0 ||
     head.x >= canvas.width ||
@@ -245,11 +259,13 @@ function draw() {
 
   snake.unshift(head);
 
+  // Food eaten
   if (head.x === food.x && head.y === food.y) {
     score++;
     safeSound("score");
     document.getElementById("score").innerText = score;
 
+    // New best score
     if (score > bestScore) {
       bestScore = score;
       localStorage.setItem("snakeBestScore", bestScore);
@@ -257,6 +273,7 @@ function draw() {
       safeSound("win");
     }
 
+    // Level up every 5 points
     if (score % 5 === 0) {
       level++;
       document.getElementById("level").innerText = level;
