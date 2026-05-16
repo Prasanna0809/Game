@@ -56,6 +56,7 @@
       border-radius: 15px;
       width: 100%;
       max-width: 600px;
+      cursor: pointer;
     }
 
     button, a {
@@ -106,6 +107,7 @@
 <div class="container">
   <h1>🏓 Vertical Pong Pro</h1>
   <p>Computer is on top. You are at the bottom. Move left and right!</p>
+  <p><strong>Tip:</strong> Press Space or click the game to pause/resume.</p>
 
   <label for="difficulty">Difficulty:</label>
   <select id="difficulty" onchange="restartGame()">
@@ -209,6 +211,10 @@ canvas.addEventListener("mousemove", function(e) {
   keepPlayerInBounds();
 });
 
+canvas.addEventListener("click", function() {
+  togglePause();
+});
+
 function setDifficulty() {
   const difficulty = document.getElementById("difficulty").value;
 
@@ -239,6 +245,8 @@ function startGame() {
   leftPressed = false;
   rightPressed = false;
 
+  document.getElementById("message").innerText = "";
+
   updateScore();
 
   cancelAnimationFrame(animationId);
@@ -247,6 +255,7 @@ function startGame() {
 
 function draw() {
   if (paused) {
+    drawPauseOverlay();
     animationId = requestAnimationFrame(draw);
     return;
   }
@@ -303,6 +312,19 @@ function drawBall() {
   ctx.beginPath();
   ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
   ctx.fill();
+}
+
+function drawPauseOverlay() {
+  ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "white";
+  ctx.font = "bold 34px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("PAUSED", canvas.width / 2, canvas.height / 2);
+
+  ctx.font = "18px Arial";
+  ctx.fillText("Press Space or click to resume", canvas.width / 2, canvas.height / 2 + 35);
 }
 
 function moveBall() {
@@ -401,6 +423,7 @@ function restartGame() {
 
 function togglePause() {
   paused = !paused;
+  safeSound("click");
 }
 
 startGame();
