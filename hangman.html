@@ -1,79 +1,356 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Hangman</title>
+  <title>Hangman Pro</title>
   <style>
-    body { text-align:center; font-family:Arial; background:#f2f2f2; }
-    button { margin:5px; padding:10px; font-size:16px; }
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #14b8a6, #6366f1);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .container {
+      background: white;
+      padding: 35px;
+      border-radius: 25px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+      width: 95%;
+      max-width: 700px;
+    }
+
+    h1 {
+      margin-top: 0;
+      color: #4f46e5;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 20px 0;
+    }
+
+    .card {
+      background: #eef2ff;
+      padding: 15px 20px;
+      border-radius: 15px;
+      min-width: 110px;
+    }
+
+    .card h2 {
+      margin: 0;
+      color: #4f46e5;
+    }
+
+    select {
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 16px;
+      margin: 10px;
+    }
+
+    #word {
+      font-size: 36px;
+      letter-spacing: 8px;
+      font-weight: bold;
+      margin: 25px 0;
+      color: #111827;
+    }
+
+    .hangman-box {
+      font-size: 42px;
+      margin: 15px 0;
+      min-height: 55px;
+    }
+
+    #letters {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    #letters button {
+      width: 42px;
+      height: 42px;
+      border: none;
+      border-radius: 10px;
+      background: #4f46e5;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    #letters button:hover {
+      background: #4338ca;
+    }
+
+    #letters button:disabled {
+      background: #cbd5e1;
+      cursor: not-allowed;
+    }
+
+    button, a {
+      display: inline-block;
+      margin: 10px 5px;
+      padding: 12px 18px;
+      border: none;
+      border-radius: 10px;
+      background: #4f46e5;
+      color: white;
+      text-decoration: none;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover, a:hover {
+      background: #4338ca;
+    }
+
+    #message {
+      font-size: 20px;
+      font-weight: bold;
+      min-height: 30px;
+      margin-top: 20px;
+    }
+
+    #hint {
+      color: #6b7280;
+      min-height: 24px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
 
-<h1>🪢 Hangman</h1>
-<p id="word"></p>
-<p id="wrong">Wrong guesses: 0 / 6</p>
-<p id="message"></p>
-<div id="letters"></div>
-<br>
-<button onclick="location.reload()">Restart</button>
-<br><br>
-<a href="index.html">⬅ Back to Home</a>
+<div class="container">
+  <h1>🪢 Hangman Pro</h1>
+  <p>Guess the hidden word before you run out of chances!</p>
+
+  <label for="category">Category:</label>
+  <select id="category" onchange="startGame()">
+    <option value="coding">Coding</option>
+    <option value="animals">Animals</option>
+    <option value="games">Games</option>
+  </select>
+
+  <div class="stats">
+    <div class="card">
+      <h2 id="wrongCount">0</h2>
+      <p>Wrong</p>
+    </div>
+    <div class="card">
+      <h2 id="wins">0</h2>
+      <p>Wins</p>
+    </div>
+    <div class="card">
+      <h2 id="losses">0</h2>
+      <p>Losses</p>
+    </div>
+    <div class="card">
+      <h2 id="streak">0</h2>
+      <p>Best Streak</p>
+    </div>
+  </div>
+
+  <div class="hangman-box" id="hangmanFace">😀</div>
+
+  <p id="word"></p>
+  <p id="hint"></p>
+  <p id="message"></p>
+
+  <div id="letters"></div>
+
+  <div>
+    <button onclick="startGame()">New Word</button>
+    <button onclick="resetStats()">Reset Stats</button>
+    <a href="index.html">⬅ Home</a>
+  </div>
+</div>
 
 <script>
-let words = ["javascript", "computer", "website", "github", "arcade"];
-let secret = words[Math.floor(Math.random() * words.length)];
+const wordBank = {
+  coding: [
+    { word: "javascript", hint: "Language used to make websites interactive" },
+    { word: "computer", hint: "Machine used to run programs" },
+    { word: "website", hint: "A page or group of pages on the internet" },
+    { word: "github", hint: "Place where developers store code" },
+    { word: "arcade", hint: "A place full of games" }
+  ],
+  animals: [
+    { word: "elephant", hint: "A large animal with a trunk" },
+    { word: "giraffe", hint: "A tall animal with a long neck" },
+    { word: "penguin", hint: "A bird that swims but does not fly" },
+    { word: "dolphin", hint: "A smart animal that lives in the ocean" },
+    { word: "tiger", hint: "A striped wild cat" }
+  ],
+  games: [
+    { word: "minecraft", hint: "A block-building game" },
+    { word: "roblox", hint: "A platform with many player-created games" },
+    { word: "fortnite", hint: "A popular battle royale game" },
+    { word: "mario", hint: "A famous Nintendo character" },
+    { word: "sonic", hint: "A fast blue video game character" }
+  ]
+};
+
+let secret = "";
+let hint = "";
 let guessed = [];
 let wrong = 0;
+let maxWrong = 6;
+let gameOver = false;
+
+let wins = Number(localStorage.getItem("hangmanWins")) || 0;
+let losses = Number(localStorage.getItem("hangmanLosses")) || 0;
+let currentStreak = Number(localStorage.getItem("hangmanCurrentStreak")) || 0;
+let bestStreak = Number(localStorage.getItem("hangmanBestStreak")) || 0;
+
+updateStats();
+
+function startGame() {
+  const category = document.getElementById("category").value;
+  const words = wordBank[category];
+  const selected = words[Math.floor(Math.random() * words.length)];
+
+  secret = selected.word;
+  hint = selected.hint;
+  guessed = [];
+  wrong = 0;
+  gameOver = false;
+
+  document.getElementById("wrongCount").innerText = wrong;
+  document.getElementById("hint").innerText = "Hint: " + hint;
+  document.getElementById("message").innerText = "";
+  document.getElementById("hangmanFace").innerText = "😀";
+
+  createLetters();
+  showWord();
+}
 
 function showWord() {
   let display = "";
-  for (let letter of secret) {
-    display += guessed.includes(letter) ? letter + " " : "_ ";
-  }
-  document.getElementById("word").innerText = display;
 
-  if (!display.includes("_")) {
-    document.getElementById("message").innerText = "🎉 You won!";
-    disableButtons();
+  for (let letter of secret) {
+    display += guessed.includes(letter) ? letter : "_";
+  }
+
+  document.getElementById("word").innerText = display.split("").join(" ");
+
+  if (!display.includes("_") && !gameOver) {
+    winGame();
   }
 }
 
-function guess(letter) {
+function guess(letter, btn) {
+  if (gameOver) return;
+
   guessed.push(letter);
+  btn.disabled = true;
 
   if (!secret.includes(letter)) {
     wrong++;
-    document.getElementById("wrong").innerText = "Wrong guesses: " + wrong + " / 6";
+    document.getElementById("wrongCount").innerText = wrong;
+    updateHangmanFace();
   }
 
-  if (wrong >= 6) {
-    document.getElementById("message").innerText = "Game over! Word was: " + secret;
-    disableButtons();
+  if (wrong >= maxWrong) {
+    loseGame();
+    return;
   }
 
   showWord();
 }
 
+function updateHangmanFace() {
+  const faces = ["😀", "🙂", "😐", "😟", "😨", "😱", "💀"];
+  document.getElementById("hangmanFace").innerText = faces[wrong];
+}
+
+function winGame() {
+  gameOver = true;
+  wins++;
+  currentStreak++;
+
+  if (currentStreak > bestStreak) {
+    bestStreak = currentStreak;
+  }
+
+  document.getElementById("message").innerText = "🎉 You won! The word was " + secret + ".";
+  saveStats();
+  updateStats();
+  disableButtons();
+}
+
+function loseGame() {
+  gameOver = true;
+  losses++;
+  currentStreak = 0;
+
+  document.getElementById("hangmanFace").innerText = "💀";
+  document.getElementById("message").innerText = "Game over! The word was " + secret + ".";
+  saveStats();
+  updateStats();
+  disableButtons();
+}
+
 function createLetters() {
-  let alphabet = "abcdefghijklmnopqrstuvwxyz";
+  const lettersDiv = document.getElementById("letters");
+  lettersDiv.innerHTML = "";
+
+  const alphabet = "abcdefghijklmnopqrstuvwxyz";
+
   for (let letter of alphabet) {
-    let btn = document.createElement("button");
-    btn.innerText = letter;
+    const btn = document.createElement("button");
+    btn.innerText = letter.toUpperCase();
+
     btn.onclick = function() {
-      btn.disabled = true;
-      guess(letter);
+      guess(letter, btn);
     };
-    document.getElementById("letters").appendChild(btn);
+
+    lettersDiv.appendChild(btn);
   }
 }
 
 function disableButtons() {
-  let buttons = document.querySelectorAll("#letters button");
+  const buttons = document.querySelectorAll("#letters button");
   buttons.forEach(btn => btn.disabled = true);
 }
 
-createLetters();
-showWord();
+function updateStats() {
+  document.getElementById("wins").innerText = wins;
+  document.getElementById("losses").innerText = losses;
+  document.getElementById("streak").innerText = bestStreak;
+}
+
+function saveStats() {
+  localStorage.setItem("hangmanWins", wins);
+  localStorage.setItem("hangmanLosses", losses);
+  localStorage.setItem("hangmanCurrentStreak", currentStreak);
+  localStorage.setItem("hangmanBestStreak", bestStreak);
+}
+
+function resetStats() {
+  wins = 0;
+  losses = 0;
+  currentStreak = 0;
+  bestStreak = 0;
+
+  saveStats();
+  updateStats();
+  startGame();
+}
+
+startGame();
 </script>
 
 </body>
