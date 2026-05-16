@@ -1,316 +1,69 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Click Master Game</title>
-
-<style>
-* { box-sizing: border-box; }
-
-body {
-    margin: 0;
-    font-family: 'Segoe UI', sans-serif;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #111827;
-}
-
-.container {
-    background: white;
-    width: 90%;
-    max-width: 560px;
-    padding: 35px;
-    border-radius: 25px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.25);
-    text-align: center;
-}
-
-h1 {
-    color: #4f46e5;
-    margin-top: 0;
-}
-
-.stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin: 25px 0;
-}
-
-.card {
-    background: #f8fafc;
-    padding: 18px;
-    border-radius: 15px;
-}
-
-.card h2 {
-    margin: 0;
-    font-size: 2rem;
-}
-
-.card p {
-    margin: 5px 0 0;
-    color: #6b7280;
-}
-
-.difficulty {
-    margin: 20px 0;
-}
-
-select {
-    padding: 10px;
-    border-radius: 10px;
-    border: 1px solid #ccc;
-    font-size: 1rem;
-}
-
-#clickButton {
-    width: 100%;
-    padding: 28px;
-    font-size: 1.6rem;
-    font-weight: bold;
-    border: none;
-    border-radius: 18px;
-    background: linear-gradient(135deg, #10b981, #059669);
-    color: white;
-    cursor: pointer;
-    box-shadow: 0 10px 20px rgba(16,185,129,0.35);
-    transition: transform 0.12s ease;
-}
-
-#clickButton:hover {
-    transform: translateY(-2px);
-}
-
-#clickButton:active {
-    transform: scale(0.95);
-}
-
-#clickButton:disabled {
-    background: #9ca3af;
-    cursor: not-allowed;
-}
-
-.buttons {
-    display: flex;
-    gap: 12px;
-    margin-top: 18px;
-}
-
-.buttons button {
-    flex: 1;
-    padding: 12px;
-    border: none;
-    border-radius: 12px;
-    background: #4f46e5;
-    color: white;
-    cursor: pointer;
-    font-size: 1rem;
-}
-
-.buttons button:hover {
-    background: #4338ca;
-}
-
-.message {
-    margin-top: 20px;
-    font-size: 1.1rem;
-    font-weight: bold;
-    min-height: 30px;
-}
-
-.combo {
-    color: #ef4444;
-    animation: pop 0.3s ease;
-}
-
-@keyframes pop {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.25); }
-    100% { transform: scale(1); }
-}
-
-.particle {
-    position: fixed;
-    font-size: 24px;
-    pointer-events: none;
-    animation: floatUp 0.8s ease forwards;
-}
-
-@keyframes floatUp {
-    from {
-        opacity: 1;
-        transform: translateY(0);
-    }
-    to {
-        opacity: 0;
-        transform: translateY(-80px);
-    }
-}
-
-@media (max-width: 520px) {
-    .stats {
-        grid-template-columns: 1fr;
+  <title>My Games Website</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f2f2f2;
     }
 
-    .buttons {
-        flex-direction: column;
+    h1 {
+      margin-top: 30px;
     }
-}
-</style>
+
+    .games {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 40px;
+    }
+
+    .game-card {
+      background: white;
+      padding: 25px;
+      width: 220px;
+      border-radius: 15px;
+      box-shadow: 0 0 10px #aaa;
+    }
+
+    .game-card a {
+      display: inline-block;
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: royalblue;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+    }
+  </style>
 </head>
-
 <body>
-<div class="container">
-    <h1>🎮 Click Master</h1>
-    <p>Click fast, build combos, and beat your high score!</p>
 
-    <div class="difficulty">
-        <label for="difficulty">Difficulty: </label>
-        <select id="difficulty" onchange="startGame()">
-            <option value="easy">Easy - 15 seconds</option>
-            <option value="medium" selected>Medium - 10 seconds</option>
-            <option value="hard">Hard - 5 seconds</option>
-        </select>
+  <h1>🎮 My Game Website</h1>
+  <p>Choose a game to play!</p>
+
+  <div class="games">
+    <div class="game-card">
+      <h2>Click Game</h2>
+      <p>Click the button and increase your score.</p>
+      <a href="click-game.html">Play</a>
     </div>
 
-    <div class="stats">
-        <div class="card">
-            <h2 id="score">0</h2>
-            <p>Score</p>
-        </div>
-        <div class="card">
-            <h2 id="timer">10</h2>
-            <p>Time</p>
-        </div>
-        <div class="card">
-            <h2 id="bestScore">0</h2>
-            <p>Best</p>
-        </div>
+    <div class="game-card">
+      <h2>Guess Game</h2>
+      <p>Guess the correct number.</p>
+      <a href="guess-game.html">Play</a>
     </div>
 
-    <button id="clickButton" onclick="increaseScore(event)">Click Me!</button>
-
-    <div class="buttons">
-        <button onclick="startGame()">Restart</button>
-        <button onclick="resetBestScore()">Reset Best</button>
+    <div class="game-card">
+      <h2>Reaction Game</h2>
+      <p>Test how fast you can react.</p>
+      <a href="reaction-game.html">Play</a>
     </div>
+  </div>
 
-    <div class="message" id="message"></div>
-</div>
-
-<script>
-let score = 0;
-let timeLeft = 10;
-let timer;
-let gameActive = false;
-let combo = 0;
-let bestScore = localStorage.getItem("bestScore") || 0;
-
-const scoreEl = document.getElementById("score");
-const timerEl = document.getElementById("timer");
-const bestScoreEl = document.getElementById("bestScore");
-const clickButton = document.getElementById("clickButton");
-const messageEl = document.getElementById("message");
-const difficultyEl = document.getElementById("difficulty");
-
-bestScoreEl.textContent = bestScore;
-
-function getTimeByDifficulty() {
-    const difficulty = difficultyEl.value;
-
-    if (difficulty === "easy") return 15;
-    if (difficulty === "hard") return 5;
-    return 10;
-}
-
-function startGame() {
-    score = 0;
-    combo = 0;
-    timeLeft = getTimeByDifficulty();
-    gameActive = true;
-
-    scoreEl.textContent = score;
-    timerEl.textContent = timeLeft;
-    messageEl.textContent = "";
-    clickButton.disabled = false;
-    clickButton.textContent = "Click Me!";
-
-    clearInterval(timer);
-
-    timer = setInterval(() => {
-        timeLeft--;
-        timerEl.textContent = timeLeft;
-
-        if (timeLeft <= 0) {
-            endGame();
-        }
-    }, 1000);
-}
-
-function increaseScore(event) {
-    if (!gameActive) startGame();
-
-    combo++;
-
-    let points = 1;
-
-    if (combo >= 10) {
-        points = 3;
-        messageEl.innerHTML = "<span class='combo'>🔥 Combo x3!</span>";
-    } else if (combo >= 5) {
-        points = 2;
-        messageEl.innerHTML = "<span class='combo'>⚡ Combo x2!</span>";
-    }
-
-    score += points;
-    scoreEl.textContent = score;
-
-    createParticle(event.clientX, event.clientY);
-}
-
-function endGame() {
-    clearInterval(timer);
-    gameActive = false;
-    clickButton.disabled = true;
-    clickButton.textContent = "Game Over!";
-
-    if (score > bestScore) {
-        bestScore = score;
-        localStorage.setItem("bestScore", bestScore);
-        bestScoreEl.textContent = bestScore;
-        messageEl.textContent = "🏆 New High Score: " + score + "!";
-    } else {
-        messageEl.textContent = "🎉 Final Score: " + score;
-    }
-}
-
-function resetBestScore() {
-    bestScore = 0;
-    localStorage.setItem("bestScore", bestScore);
-    bestScoreEl.textContent = bestScore;
-    messageEl.textContent = "Best score reset!";
-}
-
-function createParticle(x, y) {
-    const particle = document.createElement("div");
-    particle.className = "particle";
-    particle.textContent = "+1";
-    particle.style.left = x + "px";
-    particle.style.top = y + "px";
-
-    document.body.appendChild(particle);
-
-    setTimeout(() => {
-        particle.remove();
-    }, 800);
-}
-
-startGame();
-</script>
 </body>
 </html>
