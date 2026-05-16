@@ -1,24 +1,252 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Click Game</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Click Master Game</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #333;
+    }
+
+    .container {
+        background: white;
+        width: 90%;
+        max-width: 500px;
+        padding: 40px;
+        border-radius: 25px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+        text-align: center;
+    }
+
+    h1 {
+        margin-top: 0;
+        font-size: 2.5rem;
+        color: #4f46e5;
+    }
+
+    .subtitle {
+        color: #666;
+        margin-bottom: 30px;
+    }
+
+    .stats {
+        display: flex;
+        justify-content: space-between;
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .card {
+        flex: 1;
+        background: #f8fafc;
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: inset 0 0 0 1px #e5e7eb;
+    }
+
+    .card h2 {
+        margin: 0;
+        font-size: 2rem;
+        color: #111827;
+    }
+
+    .card p {
+        margin: 5px 0 0;
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+
+    #clickButton {
+        width: 100%;
+        padding: 25px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        border: none;
+        border-radius: 18px;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+    }
+
+    #clickButton:hover {
+        transform: translateY(-2px);
+    }
+
+    #clickButton:active {
+        transform: scale(0.97);
+    }
+
+    #clickButton:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+
+    .restart-btn {
+        margin-top: 20px;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 10px;
+        background: #4f46e5;
+        color: white;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .restart-btn:hover {
+        background: #4338ca;
+    }
+
+    .message {
+        margin-top: 20px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #111827;
+        min-height: 28px;
+    }
+
+    .instructions {
+        margin-top: 25px;
+        padding: 15px;
+        background: #f3f4f6;
+        border-radius: 12px;
+        color: #4b5563;
+        font-size: 0.95rem;
+    }
+
+    @media (max-width: 500px) {
+        .stats {
+            flex-direction: column;
+        }
+
+        h1 {
+            font-size: 2rem;
+        }
+
+        .container {
+            padding: 25px;
+        }
+    }
+</style>
 </head>
-<body style="text-align:center; font-family:sans-serif;">
+<body>
 
-<h1>🎮 Click the Button Game</h1>
-<p>Score: <span id="score">0</span></p>
+<div class="container">
+    <h1>🎮 Click Master</h1>
+    <p class="subtitle">Click as many times as you can in 10 seconds!</p>
 
-<button onclick="increaseScore()" style="padding:20px; font-size:20px;">
-    Click Me!
-</button>
+    <div class="stats">
+        <div class="card">
+            <h2 id="score">0</h2>
+            <p>Score</p>
+        </div>
+        <div class="card">
+            <h2 id="timer">10</h2>
+            <p>Seconds Left</p>
+        </div>
+        <div class="card">
+            <h2 id="bestScore">0</h2>
+            <p>Best Score</p>
+        </div>
+    </div>
+
+    <button id="clickButton" onclick="increaseScore()">
+        Click Me!
+    </button>
+
+    <button class="restart-btn" onclick="startGame()">
+        Restart Game
+    </button>
+
+    <div class="message" id="message"></div>
+
+    <div class="instructions">
+        💡 Press <strong>Click Me!</strong> as fast as you can before the timer reaches zero.
+    </div>
+</div>
 
 <script>
 let score = 0;
+let timeLeft = 10;
+let timer;
+let gameActive = false;
+
+const scoreEl = document.getElementById("score");
+const timerEl = document.getElementById("timer");
+const bestScoreEl = document.getElementById("bestScore");
+const clickButton = document.getElementById("clickButton");
+const messageEl = document.getElementById("message");
+
+// Load best score from browser
+let bestScore = localStorage.getItem("bestScore") || 0;
+bestScoreEl.textContent = bestScore;
+
+function startGame() {
+    score = 0;
+    timeLeft = 10;
+    gameActive = true;
+
+    scoreEl.textContent = score;
+    timerEl.textContent = timeLeft;
+    messageEl.textContent = "";
+    clickButton.disabled = false;
+    clickButton.textContent = "Click Me!";
+
+    clearInterval(timer);
+
+    timer = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = timeLeft;
+
+        if (timeLeft <= 0) {
+            endGame();
+        }
+    }, 1000);
+}
 
 function increaseScore() {
+    if (!gameActive) {
+        startGame();
+    }
+
     score++;
-    document.getElementById("score").innerText = score;
+    scoreEl.textContent = score;
 }
+
+function endGame() {
+    clearInterval(timer);
+    gameActive = false;
+    clickButton.disabled = true;
+    clickButton.textContent = "Game Over!";
+
+    if (score > bestScore) {
+        bestScore = score;
+        localStorage.setItem("bestScore", bestScore);
+        bestScoreEl.textContent = bestScore;
+        messageEl.textContent = "🏆 New High Score!";
+    } else {
+        messageEl.textContent = "🎉 Final Score: " + score;
+    }
+}
+
+// Start automatically when page loads
+startGame();
 </script>
 
 </body>
