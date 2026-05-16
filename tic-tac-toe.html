@@ -161,6 +161,8 @@
   </div>
 </div>
 
+<script src="sounds.js"></script>
+
 <script>
 let board = ["", "", "", "", "", "", "", "", ""];
 let currentPlayer = "X";
@@ -177,10 +179,18 @@ const winCombos = [
   [0,4,8], [2,4,6]
 ];
 
+function safeSound(type) {
+  if (typeof playSound === "function") {
+    playSound(type);
+  }
+}
+
 updateStats();
 
 function makeMove(index) {
   if (board[index] !== "" || gameOver) return;
+
+  safeSound("click");
 
   board[index] = currentPlayer;
   cells[index].innerText = currentPlayer;
@@ -198,6 +208,7 @@ function makeMove(index) {
     updateStats();
     document.getElementById("status").innerText = "🤝 It's a tie!";
     gameOver = true;
+    safeSound("score");
     return;
   }
 
@@ -268,6 +279,7 @@ function endRound(winner, combo) {
   updateStats();
 
   document.getElementById("status").innerText = "🎉 Player " + winner + " wins!";
+  safeSound("win");
 }
 
 function resetGame() {
@@ -305,6 +317,5 @@ function saveStats() {
 }
 </script>
 
-<script src="sounds.js"></script>
 </body>
 </html>
