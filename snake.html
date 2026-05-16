@@ -131,6 +131,8 @@
   </div>
 </div>
 
+<script src="sounds.js"></script>
+
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -141,7 +143,7 @@ let food;
 let dx;
 let dy;
 let score;
-let bestScore = localStorage.getItem("snakeBestScore") || 0;
+let bestScore = Number(localStorage.getItem("snakeBestScore")) || 0;
 let level;
 let speed;
 let gameInterval;
@@ -149,6 +151,12 @@ let paused = false;
 let gameOver = false;
 
 document.getElementById("best").innerText = bestScore;
+
+function safeSound(type) {
+  if (typeof playSound === "function") {
+    playSound(type);
+  }
+}
 
 document.addEventListener("keydown", function(e) {
   if (e.key === "ArrowUp") setDirection("up");
@@ -177,18 +185,28 @@ function startGame() {
 }
 
 function setDirection(direction) {
+  let changed = false;
+
   if (direction === "up" && dy === 0) {
     dx = 0;
     dy = -box;
+    changed = true;
   } else if (direction === "down" && dy === 0) {
     dx = 0;
     dy = box;
+    changed = true;
   } else if (direction === "left" && dx === 0) {
     dx = -box;
     dy = 0;
+    changed = true;
   } else if (direction === "right" && dx === 0) {
     dx = box;
     dy = 0;
+    changed = true;
+  }
+
+  if (changed) {
+    safeSound("click");
   }
 }
 
@@ -229,12 +247,14 @@ function draw() {
 
   if (head.x === food.x && head.y === food.y) {
     score++;
+    safeSound("score");
     document.getElementById("score").innerText = score;
 
     if (score > bestScore) {
       bestScore = score;
       localStorage.setItem("snakeBestScore", bestScore);
       document.getElementById("best").innerText = bestScore;
+      safeSound("win");
     }
 
     if (score % 5 === 0) {
@@ -243,6 +263,7 @@ function draw() {
       speed = Math.max(60, speed - 15);
       clearInterval(gameInterval);
       gameInterval = setInterval(draw, speed);
+      safeSound("win");
     }
 
     food = randomFood();
@@ -275,7 +296,10 @@ function randomFood() {
       x: Math.floor(Math.random() * 20) * box,
       y: Math.floor(Math.random() * 20) * box
     };
-  } while (snake && snake.some(part => part.x === newFood.x && part.y === newFood.y));
+  } while (
+    snake &&
+    snake.some(part => part.x === newFood.x && part.y === newFood.y)
+  );
 
   return newFood;
 }
@@ -283,6 +307,7 @@ function randomFood() {
 function endGame() {
   gameOver = true;
   clearInterval(gameInterval);
+  safeSound("lose");
   alert("Game Over! Score: " + score);
 }
 
@@ -297,6 +322,5 @@ function togglePause() {
 startGame();
 </script>
 
-<script src="sounds.js"></script>
 </body>
 </html>
