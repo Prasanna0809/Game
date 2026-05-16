@@ -163,6 +163,8 @@
   <p id="message"></p>
 </div>
 
+<script src="sounds.js"></script>
+
 <script>
 const emojiSets = {
   easy: ["🍎", "🍎", "🍌", "🍌", "🍇", "🍇", "🍒", "🍒"],
@@ -179,6 +181,12 @@ let matched = 0;
 let seconds = 0;
 let timerInterval;
 let gameStarted = false;
+
+function safeSound(type) {
+  if (typeof playSound === "function") {
+    playSound(type);
+  }
+}
 
 function startGame() {
   clearInterval(timerInterval);
@@ -238,6 +246,7 @@ function flipCard(card) {
   if (lockBoard || card === firstCard || card.classList.contains("matched")) return;
 
   startTimer();
+  safeSound("click");
 
   card.innerText = card.dataset.emoji;
   card.classList.add("flipped");
@@ -259,11 +268,14 @@ function flipCard(card) {
     firstCard = null;
     secondCard = null;
 
+    safeSound("score");
+
     if (matched === cards.length) {
       finishGame();
     }
   } else {
     lockBoard = true;
+    safeSound("lose");
 
     setTimeout(() => {
       firstCard.innerText = "?";
@@ -295,6 +307,7 @@ function finishGame() {
       "🎉 You won in " + moves + " moves and " + seconds + " seconds!";
   }
 
+  safeSound("win");
   updateBestDisplay();
 }
 
@@ -316,6 +329,5 @@ function resetBest() {
 startGame();
 </script>
 
-<script src="sounds.js"></script>
 </body>
 </html>
