@@ -1,54 +1,188 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Sudoku</title>
+  <title>Sudoku Pro</title>
   <style>
-    body { text-align:center; font-family:Arial; background:#f2f2f2; }
-    table { border-collapse: collapse; margin: 20px auto; }
-    td { border: 1px solid #555; }
-    input {
-      width: 35px;
-      height: 35px;
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #0ea5e9, #8b5cf6);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       text-align: center;
-      font-size: 20px;
     }
-    .fixed {
-      background: #ddd;
-      font-weight: bold;
+
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 25px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+      width: 95%;
+      max-width: 720px;
     }
-    button {
-      padding: 10px 20px;
+
+    h1 {
+      margin-top: 0;
+      color: #2563eb;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 20px 0;
+    }
+
+    .card {
+      background: #eff6ff;
+      padding: 15px 20px;
+      border-radius: 15px;
+      min-width: 110px;
+    }
+
+    .card h2 {
+      margin: 0;
+      color: #2563eb;
+    }
+
+    select {
+      padding: 10px;
+      border-radius: 10px;
       font-size: 16px;
       margin: 10px;
+    }
+
+    table {
+      border-collapse: collapse;
+      margin: 20px auto;
+      background: white;
+      border: 4px solid #111827;
+    }
+
+    td {
+      border: 1px solid #94a3b8;
+    }
+
+    td:nth-child(3),
+    td:nth-child(6) {
+      border-right: 4px solid #111827;
+    }
+
+    tr:nth-child(3) td,
+    tr:nth-child(6) td {
+      border-bottom: 4px solid #111827;
+    }
+
+    input {
+      width: 48px;
+      height: 48px;
+      text-align: center;
+      font-size: 22px;
+      border: none;
+      outline: none;
+      color: #2563eb;
+      font-weight: bold;
+    }
+
+    input:focus {
+      background: #dbeafe;
+    }
+
+    .fixed {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .wrong {
+      background: #fecaca !important;
+      color: #dc2626;
+    }
+
+    .correct {
+      background: #bbf7d0 !important;
+      color: #15803d;
+    }
+
+    button, a {
+      display: inline-block;
+      margin: 8px 5px;
+      padding: 12px 18px;
+      border: none;
+      border-radius: 10px;
+      background: #2563eb;
+      color: white;
+      text-decoration: none;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover, a:hover {
+      background: #1d4ed8;
+    }
+
+    #message {
+      font-size: 20px;
+      font-weight: bold;
+      min-height: 30px;
+    }
+
+    @media (max-width: 560px) {
+      input {
+        width: 34px;
+        height: 34px;
+        font-size: 18px;
+      }
     }
   </style>
 </head>
 <body>
 
-<h1>🧩 Sudoku</h1>
-<p>Fill in the missing numbers.</p>
+<div class="container">
+  <h1>🧩 Sudoku Pro</h1>
+  <p>Fill the board correctly and beat your best time!</p>
 
-<table id="board"></table>
+  <label for="difficulty">Difficulty:</label>
+  <select id="difficulty" onchange="startGame()">
+    <option value="easy">Easy</option>
+    <option value="medium" selected>Medium</option>
+    <option value="hard">Hard</option>
+  </select>
 
-<button onclick="checkSudoku()">Check</button>
-<button onclick="location.reload()">Restart</button>
-<p id="message"></p>
-<a href="index.html">⬅ Back to Home</a>
+  <div class="stats">
+    <div class="card">
+      <h2 id="timer">0</h2>
+      <p>Seconds</p>
+    </div>
+    <div class="card">
+      <h2 id="mistakes">0</h2>
+      <p>Mistakes</p>
+    </div>
+    <div class="card">
+      <h2 id="best">--</h2>
+      <p>Best Time</p>
+    </div>
+  </div>
+
+  <table id="board"></table>
+
+  <div>
+    <button onclick="checkSudoku()">Check</button>
+    <button onclick="showHint()">Hint</button>
+    <button onclick="startGame()">Restart</button>
+    <button onclick="resetBest()">Reset Best</button>
+    <a href="index.html">⬅ Home</a>
+  </div>
+
+  <p id="message"></p>
+</div>
 
 <script>
-let puzzle = [
-  [5,3,"","",7,"","","",""],
-  [6,"","",1,9,5,"","",""],
-  ["",9,8,"","","","",6,""],
-  [8,"","","",6,"","","",3],
-  [4,"","",8,"",3,"","",1],
-  [7,"","","",2,"","","",6],
-  ["",6,"","","","",2,8,""],
-  ["","","",4,1,9,"","",5],
-  ["","","","",8,"","",7,9]
-];
-
-let solution = [
+const solution = [
   [5,3,4,6,7,8,9,1,2],
   [6,7,2,1,9,5,3,4,8],
   [1,9,8,3,4,2,5,6,7],
@@ -60,16 +194,92 @@ let solution = [
   [3,4,5,2,8,6,1,7,9]
 ];
 
+const puzzles = {
+  easy: [
+    [5,3,4,"",7,8,"",1,2],
+    [6,7,"",1,9,5,3,"",8],
+    [1,9,8,3,"",2,5,6,""],
+    [8,5,9,"",6,1,"",2,3],
+    [4,"",6,8,5,3,7,"",1],
+    [7,1,"",9,2,"",8,5,6],
+    ["",6,1,5,"",7,2,8,4],
+    [2,"",7,4,1,9,"",3,5],
+    [3,4,"",2,8,"",1,7,9]
+  ],
+  medium: [
+    [5,3,"","",7,"","","",""],
+    [6,"","",1,9,5,"","",""],
+    ["",9,8,"","","","",6,""],
+    [8,"","","",6,"","","",3],
+    [4,"","",8,"",3,"","",1],
+    [7,"","","",2,"","","",6],
+    ["",6,"","","","",2,8,""],
+    ["","","",4,1,9,"","",5],
+    ["","","","",8,"","",7,9]
+  ],
+  hard: [
+    [5,"","","",7,"","","",""],
+    ["","","",1,"",5,"","",""],
+    ["",9,"","","","","",6,""],
+    [8,"","","","","","","",3],
+    ["","","",8,"",3,"","",""],
+    [7,"","","","","","","",6],
+    ["",6,"","","","","2,","8",""],
+    ["","","",4,"","","","",5],
+    ["","","","",8,"","","",9]
+  ]
+};
+
+let puzzle = [];
+let seconds = 0;
+let mistakes = 0;
+let timerInterval;
+let gameFinished = false;
+
+function startGame() {
+  clearInterval(timerInterval);
+
+  const difficulty = document.getElementById("difficulty").value;
+  puzzle = puzzles[difficulty].map(row => [...row]);
+
+  seconds = 0;
+  mistakes = 0;
+  gameFinished = false;
+
+  document.getElementById("timer").innerText = seconds;
+  document.getElementById("mistakes").innerText = mistakes;
+  document.getElementById("message").innerText = "";
+
+  updateBestDisplay();
+  createBoard();
+
+  timerInterval = setInterval(() => {
+    seconds++;
+    document.getElementById("timer").innerText = seconds;
+  }, 1000);
+}
+
 function createBoard() {
-  let table = document.getElementById("board");
+  const table = document.getElementById("board");
+  table.innerHTML = "";
 
   for (let r = 0; r < 9; r++) {
-    let row = document.createElement("tr");
+    const row = document.createElement("tr");
 
     for (let c = 0; c < 9; c++) {
-      let cell = document.createElement("td");
-      let input = document.createElement("input");
+      const cell = document.createElement("td");
+      const input = document.createElement("input");
+
       input.maxLength = 1;
+      input.dataset.row = r;
+      input.dataset.col = c;
+
+      input.addEventListener("input", function() {
+        input.value = input.value.replace(/[^1-9]/g, "");
+
+        input.classList.remove("wrong");
+        input.classList.remove("correct");
+      });
 
       if (puzzle[r][c] !== "") {
         input.value = puzzle[r][c];
@@ -86,24 +296,110 @@ function createBoard() {
 }
 
 function checkSudoku() {
-  let inputs = document.querySelectorAll("input");
-  let index = 0;
+  if (gameFinished) return;
 
-  for (let r = 0; r < 9; r++) {
-    for (let c = 0; c < 9; c++) {
-      let value = Number(inputs[index].value);
-      if (value !== solution[r][c]) {
-        document.getElementById("message").innerText = "❌ Something is wrong. Try again!";
-        return;
-      }
-      index++;
+  const inputs = document.querySelectorAll("input");
+  let allCorrect = true;
+  let foundMistake = false;
+
+  inputs.forEach(input => {
+    if (input.disabled) return;
+
+    const r = Number(input.dataset.row);
+    const c = Number(input.dataset.col);
+    const value = Number(input.value);
+
+    input.classList.remove("wrong");
+    input.classList.remove("correct");
+
+    if (!value) {
+      allCorrect = false;
+      return;
     }
+
+    if (value !== solution[r][c]) {
+      input.classList.add("wrong");
+      allCorrect = false;
+      foundMistake = true;
+    } else {
+      input.classList.add("correct");
+    }
+  });
+
+  if (foundMistake) {
+    mistakes++;
+    document.getElementById("mistakes").innerText = mistakes;
+    document.getElementById("message").innerText = "❌ Some numbers are wrong.";
+    return;
   }
 
-  document.getElementById("message").innerText = "🎉 Correct! You solved it!";
+  if (!allCorrect) {
+    document.getElementById("message").innerText = "Keep going! Some spaces are still empty.";
+    return;
+  }
+
+  finishGame();
 }
 
-createBoard();
+function showHint() {
+  if (gameFinished) return;
+
+  const inputs = Array.from(document.querySelectorAll("input"));
+  const emptyInputs = inputs.filter(input => !input.disabled && input.value === "");
+
+  if (emptyInputs.length === 0) {
+    document.getElementById("message").innerText = "No empty spaces left!";
+    return;
+  }
+
+  const input = emptyInputs[Math.floor(Math.random() * emptyInputs.length)];
+  const r = Number(input.dataset.row);
+  const c = Number(input.dataset.col);
+
+  input.value = solution[r][c];
+  input.classList.add("correct");
+
+  mistakes++;
+  document.getElementById("mistakes").innerText = mistakes;
+  document.getElementById("message").innerText = "💡 Hint used. It counts as a mistake.";
+}
+
+function finishGame() {
+  gameFinished = true;
+  clearInterval(timerInterval);
+
+  const difficulty = document.getElementById("difficulty").value;
+  const key = "sudokuBest_" + difficulty;
+  const best = Number(localStorage.getItem(key));
+
+  if (!best || seconds < best) {
+    localStorage.setItem(key, seconds);
+    document.getElementById("message").innerText =
+      "🏆 New best time: " + seconds + " seconds!";
+  } else {
+    document.getElementById("message").innerText =
+      "🎉 You solved it in " + seconds + " seconds!";
+  }
+
+  updateBestDisplay();
+}
+
+function updateBestDisplay() {
+  const difficulty = document.getElementById("difficulty").value;
+  const key = "sudokuBest_" + difficulty;
+  const best = localStorage.getItem(key);
+
+  document.getElementById("best").innerText = best ? best + "s" : "--";
+}
+
+function resetBest() {
+  const difficulty = document.getElementById("difficulty").value;
+  localStorage.removeItem("sudokuBest_" + difficulty);
+  updateBestDisplay();
+  document.getElementById("message").innerText = "Best time reset!";
+}
+
+startGame();
 </script>
 
 </body>
