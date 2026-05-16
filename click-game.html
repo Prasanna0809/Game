@@ -101,7 +101,8 @@ select {
     margin-top: 18px;
 }
 
-.buttons button {
+.buttons button,
+.buttons a {
     flex: 1;
     padding: 12px;
     border: none;
@@ -110,9 +111,12 @@ select {
     color: white;
     cursor: pointer;
     font-size: 1rem;
+    text-decoration: none;
+    text-align: center;
 }
 
-.buttons button:hover {
+.buttons button:hover,
+.buttons a:hover {
     background: #4338ca;
 }
 
@@ -198,10 +202,13 @@ select {
     <div class="buttons">
         <button onclick="startGame()">Restart</button>
         <button onclick="resetBestScore()">Reset Best</button>
+        <a href="index.html">⬅ Home</a>
     </div>
 
     <div class="message" id="message"></div>
 </div>
+
+<script src="sounds.js"></script>
 
 <script>
 let score = 0;
@@ -209,7 +216,7 @@ let timeLeft = 10;
 let timer;
 let gameActive = false;
 let combo = 0;
-let bestScore = localStorage.getItem("bestScore") || 0;
+let bestScore = Number(localStorage.getItem("bestScore")) || 0;
 
 const scoreEl = document.getElementById("score");
 const timerEl = document.getElementById("timer");
@@ -219,6 +226,12 @@ const messageEl = document.getElementById("message");
 const difficultyEl = document.getElementById("difficulty");
 
 bestScoreEl.textContent = bestScore;
+
+function safeSound(type) {
+    if (typeof playSound === "function") {
+        playSound(type);
+    }
+}
 
 function getTimeByDifficulty() {
     const difficulty = difficultyEl.value;
@@ -255,6 +268,7 @@ function startGame() {
 function increaseScore(event) {
     if (!gameActive) startGame();
 
+    safeSound("click");
     combo++;
 
     let points = 1;
@@ -262,9 +276,11 @@ function increaseScore(event) {
     if (combo >= 10) {
         points = 3;
         messageEl.innerHTML = "<span class='combo'>🔥 Combo x3!</span>";
+        safeSound("score");
     } else if (combo >= 5) {
         points = 2;
         messageEl.innerHTML = "<span class='combo'>⚡ Combo x2!</span>";
+        safeSound("score");
     }
 
     score += points;
@@ -284,8 +300,10 @@ function endGame() {
         localStorage.setItem("bestScore", bestScore);
         bestScoreEl.textContent = bestScore;
         messageEl.textContent = "🏆 New High Score: " + score + "!";
+        safeSound("win");
     } else {
         messageEl.textContent = "🎉 Final Score: " + score;
+        safeSound("lose");
     }
 }
 
@@ -312,7 +330,5 @@ function createParticle(x, y) {
 
 startGame();
 </script>
-
-<script src="sounds.js"></script>
 </body>
 </html>
