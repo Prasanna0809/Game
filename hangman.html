@@ -178,6 +178,8 @@
   </div>
 </div>
 
+<script src="sounds.js"></script>
+
 <script>
 const wordBank = {
   coding: [
@@ -214,6 +216,12 @@ let wins = Number(localStorage.getItem("hangmanWins")) || 0;
 let losses = Number(localStorage.getItem("hangmanLosses")) || 0;
 let currentStreak = Number(localStorage.getItem("hangmanCurrentStreak")) || 0;
 let bestStreak = Number(localStorage.getItem("hangmanBestStreak")) || 0;
+
+function safeSound(type) {
+  if (typeof playSound === "function") {
+    playSound(type);
+  }
+}
 
 updateStats();
 
@@ -257,10 +265,13 @@ function guess(letter, btn) {
   guessed.push(letter);
   btn.disabled = true;
 
-  if (!secret.includes(letter)) {
+  if (secret.includes(letter)) {
+    safeSound("click");
+  } else {
     wrong++;
     document.getElementById("wrongCount").innerText = wrong;
     updateHangmanFace();
+    safeSound("lose");
   }
 
   if (wrong >= maxWrong) {
@@ -281,14 +292,24 @@ function winGame() {
   wins++;
   currentStreak++;
 
+  let newBest = false;
   if (currentStreak > bestStreak) {
     bestStreak = currentStreak;
+    newBest = true;
   }
 
-  document.getElementById("message").innerText = "🎉 You won! The word was " + secret + ".";
+  document.getElementById("message").innerText =
+    "🎉 You won! The word was " + secret + ".";
+
   saveStats();
   updateStats();
   disableButtons();
+
+  safeSound("win");
+
+  if (newBest) {
+    setTimeout(() => safeSound("win"), 250);
+  }
 }
 
 function loseGame() {
@@ -297,10 +318,14 @@ function loseGame() {
   currentStreak = 0;
 
   document.getElementById("hangmanFace").innerText = "💀";
-  document.getElementById("message").innerText = "Game over! The word was " + secret + ".";
+  document.getElementById("message").innerText =
+    "💀 Game over! The word was " + secret + ".";
+
   saveStats();
   updateStats();
   disableButtons();
+
+  safeSound("lose");
 }
 
 function createLetters() {
@@ -353,6 +378,5 @@ function resetStats() {
 startGame();
 </script>
 
-<script src="sounds.js"></script>
 </body>
 </html>
