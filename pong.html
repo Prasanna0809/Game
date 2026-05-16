@@ -138,8 +138,8 @@
   </div>
 
   <div class="mobile-controls">
-    <button onclick="movePlayer(-45)">⬅</button>
-    <button onclick="movePlayer(45)">➡</button>
+    <button onclick="movePlayer(-70)">⬅</button>
+    <button onclick="movePlayer(70)">➡</button>
   </div>
 
   <p id="message"></p>
@@ -172,6 +172,10 @@ let paused = false;
 let animationId;
 let computerSpeed = 0.08;
 
+let leftPressed = false;
+let rightPressed = false;
+let paddleSpeed = 9;
+
 document.getElementById("bestScore").innerText = bestScore;
 
 function safeSound(type) {
@@ -181,9 +185,22 @@ function safeSound(type) {
 }
 
 document.addEventListener("keydown", function(e) {
-  if (e.key === "ArrowLeft") movePlayer(-35);
-  if (e.key === "ArrowRight") movePlayer(35);
+  if (
+    e.key === "ArrowLeft" ||
+    e.key === "ArrowRight" ||
+    e.key === " "
+  ) {
+    e.preventDefault();
+  }
+
+  if (e.key === "ArrowLeft") leftPressed = true;
+  if (e.key === "ArrowRight") rightPressed = true;
   if (e.key === " ") togglePause();
+});
+
+document.addEventListener("keyup", function(e) {
+  if (e.key === "ArrowLeft") leftPressed = false;
+  if (e.key === "ArrowRight") rightPressed = false;
 });
 
 canvas.addEventListener("mousemove", function(e) {
@@ -219,6 +236,8 @@ function startGame() {
   computerScore = 0;
   winStreak = 0;
   paused = false;
+  leftPressed = false;
+  rightPressed = false;
 
   updateScore();
 
@@ -231,6 +250,8 @@ function draw() {
     animationId = requestAnimationFrame(draw);
     return;
   }
+
+  movePlayerSmooth();
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -245,6 +266,18 @@ function draw() {
   updateScore();
 
   animationId = requestAnimationFrame(draw);
+}
+
+function movePlayerSmooth() {
+  if (leftPressed) {
+    playerX -= paddleSpeed;
+  }
+
+  if (rightPressed) {
+    playerX += paddleSpeed;
+  }
+
+  keepPlayerInBounds();
 }
 
 function drawCourt() {
@@ -291,7 +324,6 @@ function moveComputer() {
 }
 
 function checkCollisions() {
-  // Computer paddle hit
   if (
     ballY - ballRadius < 20 + paddleH &&
     ballX > computerX &&
@@ -302,7 +334,6 @@ function checkCollisions() {
     safeSound("click");
   }
 
-  // Player paddle hit
   if (
     ballY + ballRadius > canvas.height - 32 &&
     ballX > playerX &&
@@ -313,7 +344,6 @@ function checkCollisions() {
     safeSound("click");
   }
 
-  // Player scores
   if (ballY < 0) {
     playerScore++;
     winStreak++;
@@ -330,7 +360,6 @@ function checkCollisions() {
     resetBall(1);
   }
 
-  // Computer scores
   if (ballY > canvas.height) {
     computerScore++;
     winStreak = 0;
