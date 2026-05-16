@@ -1,50 +1,289 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Reaction Game</title>
+  <title>Reaction Master</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #ef4444, #facc15);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .container {
+      background: white;
+      padding: 35px;
+      border-radius: 25px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+      width: 90%;
+      max-width: 560px;
+    }
+
+    h1 {
+      margin-top: 0;
+      color: #dc2626;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 20px 0;
+    }
+
+    .card {
+      background: #fef2f2;
+      padding: 15px 20px;
+      border-radius: 15px;
+      min-width: 120px;
+    }
+
+    .card h2 {
+      margin: 0;
+      color: #dc2626;
+    }
+
+    select {
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 16px;
+      margin: 10px;
+    }
+
+    #reactionButton {
+      width: 100%;
+      padding: 45px;
+      font-size: 28px;
+      font-weight: bold;
+      border: none;
+      border-radius: 20px;
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: transform 0.15s ease, background 0.2s ease;
+    }
+
+    #reactionButton:hover {
+      transform: scale(1.02);
+    }
+
+    .waiting {
+      background: #dc2626 !important;
+    }
+
+    .ready {
+      background: #16a34a !important;
+    }
+
+    .disabled {
+      background: #9ca3af !important;
+    }
+
+    button, a {
+      display: inline-block;
+      margin: 10px 5px;
+      padding: 12px 18px;
+      border: none;
+      border-radius: 10px;
+      background: #dc2626;
+      color: white;
+      text-decoration: none;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover, a:hover {
+      background: #b91c1c;
+    }
+
+    #message {
+      font-size: 20px;
+      font-weight: bold;
+      min-height: 30px;
+      margin-top: 20px;
+    }
+  </style>
 </head>
-<body style="text-align:center; font-family:Arial;">
+<body>
 
-<h1>⚡ Reaction Game</h1>
-<p>Click start. When the button turns green, click it fast!</p>
+<div class="container">
+  <h1>⚡ Reaction Master</h1>
+  <p>Wait for green, then click as fast as you can!</p>
 
-<button id="btn" onclick="startGame()" style="padding:20px; font-size:20px;">
-  Start
-</button>
+  <label for="difficulty">Difficulty:</label>
+  <select id="difficulty" onchange="resetGame()">
+    <option value="easy">Easy</option>
+    <option value="medium" selected>Medium</option>
+    <option value="hard">Hard</option>
+  </select>
 
-<p id="result"></p>
-<a href="index.html">⬅ Back to Home</a>
+  <div class="stats">
+    <div class="card">
+      <h2 id="lastTime">--</h2>
+      <p>Last Time</p>
+    </div>
+    <div class="card">
+      <h2 id="bestTime">--</h2>
+      <p>Best Time</p>
+    </div>
+    <div class="card">
+      <h2 id="attempts">0</h2>
+      <p>Attempts</p>
+    </div>
+  </div>
+
+  <button id="reactionButton" onclick="handleClick()">Start</button>
+
+  <div>
+    <button onclick="resetGame()">Restart</button>
+    <button onclick="resetBest()">Reset Best</button>
+    <a href="index.html">⬅ Home</a>
+  </div>
+
+  <p id="message">Click Start to begin.</p>
+</div>
 
 <script>
 let startTime;
-let ready = false;
+let timeoutId;
+let state = "idle";
+let attempts = 0;
 
-function startGame() {
-  let btn = document.getElementById("btn");
-  let result = document.getElementById("result");
+const button = document.getElementById("reactionButton");
 
-  if (ready) {
-    let reactionTime = Date.now() - startTime;
-    result.innerText = "⏱ Your reaction time: " + reactionTime + " ms";
-    btn.innerText = "Start Again";
-    btn.style.background = "";
-    ready = false;
+function getDelay() {
+  const difficulty = document.getElementById("difficulty").value;
+
+  if (difficulty === "easy") {
+    return Math.floor(Math.random() * 2000) + 1500;
+  }
+
+  if (difficulty === "hard") {
+    return Math.floor(Math.random() * 4000) + 500;
+  }
+
+  return Math.floor(Math.random() * 3000) + 1000;
+}
+
+function handleClick() {
+  if (state === "idle") {
+    startRound();
     return;
   }
 
-  result.innerText = "Wait for green...";
-  btn.innerText = "Wait...";
-  btn.style.background = "red";
+  if (state === "waiting") {
+    falseStart();
+    return;
+  }
 
-  let delay = Math.floor(Math.random() * 3000) + 1000;
+  if (state === "ready") {
+    finishRound();
+  }
+}
 
-  setTimeout(function() {
-    btn.style.background = "green";
-    btn.innerText = "CLICK!";
+function startRound() {
+  clearTimeout(timeoutId);
+
+  state = "waiting";
+  button.innerText = "Wait...";
+  button.className = "waiting";
+  document.getElementById("message").innerText = "Wait for green. Don't click early!";
+
+  const delay = getDelay();
+
+  timeoutId = setTimeout(() => {
+    state = "ready";
+    button.innerText = "CLICK!";
+    button.className = "ready";
     startTime = Date.now();
-    ready = true;
+    document.getElementById("message").innerText = "Click now!";
   }, delay);
 }
+
+function finishRound() {
+  const reactionTime = Date.now() - startTime;
+  attempts++;
+
+  document.getElementById("lastTime").innerText = reactionTime + "ms";
+  document.getElementById("attempts").innerText = attempts;
+
+  saveBest(reactionTime);
+
+  state = "idle";
+  button.innerText = "Start Again";
+  button.className = "";
+  document.getElementById("message").innerText =
+    "⚡ Your reaction time was " + reactionTime + "ms!";
+}
+
+function falseStart() {
+  clearTimeout(timeoutId);
+
+  attempts++;
+  document.getElementById("attempts").innerText = attempts;
+
+  state = "idle";
+  button.innerText = "Start Again";
+  button.className = "";
+  document.getElementById("message").innerText =
+    "🚫 Too early! Wait for green.";
+}
+
+function saveBest(time) {
+  const difficulty = document.getElementById("difficulty").value;
+  const key = "reactionBest_" + difficulty;
+  const best = Number(localStorage.getItem(key));
+
+  if (!best || time < best) {
+    localStorage.setItem(key, time);
+    document.getElementById("bestTime").innerText = time + "ms";
+    document.getElementById("message").innerText =
+      "🏆 New best reaction time: " + time + "ms!";
+  } else {
+    updateBestDisplay();
+  }
+}
+
+function updateBestDisplay() {
+  const difficulty = document.getElementById("difficulty").value;
+  const key = "reactionBest_" + difficulty;
+  const best = localStorage.getItem(key);
+
+  document.getElementById("bestTime").innerText = best ? best + "ms" : "--";
+}
+
+function resetGame() {
+  clearTimeout(timeoutId);
+
+  state = "idle";
+  attempts = 0;
+
+  document.getElementById("attempts").innerText = attempts;
+  document.getElementById("lastTime").innerText = "--";
+  document.getElementById("message").innerText = "Click Start to begin.";
+
+  button.innerText = "Start";
+  button.className = "";
+
+  updateBestDisplay();
+}
+
+function resetBest() {
+  const difficulty = document.getElementById("difficulty").value;
+  localStorage.removeItem("reactionBest_" + difficulty);
+  updateBestDisplay();
+  document.getElementById("message").innerText = "Best time reset!";
+}
+
+resetGame();
 </script>
 
 </body>
