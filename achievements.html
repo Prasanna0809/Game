@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Achievements</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: linear-gradient(135deg, #111827, #7c3aed);
+      color: white;
+      margin: 0;
+      padding: 30px;
+    }
+
+    h1 {
+      font-size: 42px;
+    }
+
+    .achievements {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 35px;
+    }
+
+    .achievement-card {
+      background: white;
+      color: #222;
+      padding: 25px;
+      width: 240px;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    }
+
+    .locked {
+      opacity: 0.45;
+      filter: grayscale(1);
+    }
+
+    .icon {
+      font-size: 45px;
+    }
+
+    a {
+      display: inline-block;
+      margin-top: 30px;
+      padding: 12px 22px;
+      background: royalblue;
+      color: white;
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🏆 Arcade Achievements</h1>
+<p>Unlock badges by playing games.</p>
+
+<div class="achievements" id="achievementList"></div>
+
+<a href="index.html">⬅ Back to Arcade</a>
+
+<script src="achievements.js"></script>
+
+<script>
+const unlocked = getUnlockedAchievements();
+const list = document.getElementById("achievementList");
+
+achievements.forEach(achievement => {
+  const card = document.createElement("div");
+  card.className = "achievement-card";
+
+  if (!unlocked.includes(achievement.id)) {
+    card.classList.add("locked");
+  }
+
+  card.innerHTML = `
+    <div class="icon">${achievement.icon}</div>
+    <h2>${achievement.title}</h2>
+    <p>${achievement.description}</p>
+    <strong>${unlocked.includes(achievement.id) ? "Unlocked" : "Locked"}</strong>
+  `;
+
+  list.appendChild(card);
+});
+</script>
+
+</body>
+</html>
