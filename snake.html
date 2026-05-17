@@ -54,6 +54,7 @@
       border-radius: 15px;
       width: 100%;
       max-width: 400px;
+      cursor: pointer;
     }
 
     button, a {
@@ -97,6 +98,7 @@
 <div class="container">
   <h1>🐍 Snake Master</h1>
   <p>Use arrow keys or mobile buttons to move.</p>
+  <p><strong>Tip:</strong> Press Space or click the game to pause/resume.</p>
 
   <div class="stats">
     <div class="card">
@@ -158,7 +160,7 @@ function safeSound(type) {
   }
 }
 
-// FIX: Prevent page scrolling when using arrow keys and spacebar
+// Prevent page scrolling and handle controls
 document.addEventListener("keydown", function(e) {
   if (
     e.key === "ArrowUp" ||
@@ -175,6 +177,11 @@ document.addEventListener("keydown", function(e) {
   if (e.key === "ArrowLeft") setDirection("left");
   if (e.key === "ArrowRight") setDirection("right");
   if (e.key === " ") togglePause();
+});
+
+// Click canvas to pause/resume
+canvas.addEventListener("click", function() {
+  togglePause();
 });
 
 function startGame() {
@@ -222,7 +229,12 @@ function setDirection(direction) {
 }
 
 function draw() {
-  if (paused || gameOver) return;
+  if (gameOver) return;
+
+  if (paused) {
+    drawPauseOverlay();
+    return;
+  }
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -231,7 +243,13 @@ function draw() {
   // Food
   ctx.fillStyle = "#ef4444";
   ctx.beginPath();
-  ctx.arc(food.x + box / 2, food.y + box / 2, box / 2 - 2, 0, Math.PI * 2);
+  ctx.arc(
+    food.x + box / 2,
+    food.y + box / 2,
+    box / 2 - 2,
+    0,
+    Math.PI * 2
+  );
   ctx.fill();
 
   // Snake
@@ -240,7 +258,7 @@ function draw() {
     ctx.fillRect(part.x, part.y, box - 2, box - 2);
   });
 
-  let head = {
+  const head = {
     x: snake[0].x + dx,
     y: snake[0].y + dy
   };
@@ -259,13 +277,13 @@ function draw() {
 
   snake.unshift(head);
 
-  // Food eaten
+  // Eat food
   if (head.x === food.x && head.y === food.y) {
     score++;
     safeSound("score");
     document.getElementById("score").innerText = score;
 
-    // New best score
+    // New best
     if (score > bestScore) {
       bestScore = score;
       localStorage.setItem("snakeBestScore", bestScore);
@@ -287,6 +305,23 @@ function draw() {
   } else {
     snake.pop();
   }
+}
+
+function drawPauseOverlay() {
+  ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "white";
+  ctx.font = "bold 34px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("PAUSED", canvas.width / 2, canvas.height / 2);
+
+  ctx.font = "18px Arial";
+  ctx.fillText(
+    "Press Space or click to resume",
+    canvas.width / 2,
+    canvas.height / 2 + 35
+  );
 }
 
 function drawGrid() {
@@ -333,7 +368,9 @@ function restartGame() {
 }
 
 function togglePause() {
+  if (gameOver) return;
   paused = !paused;
+  safeSound("click");
 }
 
 startGame();

@@ -55,6 +55,7 @@
       border-radius: 15px;
       width: 100%;
       max-width: 560px;
+      cursor: pointer;
     }
 
     button, a {
@@ -86,6 +87,7 @@
 <div class="container">
   <h1>🧱 Breakout Pro</h1>
   <p>Use left/right arrow keys or move your mouse.</p>
+  <p><strong>Tip:</strong> Press Space or click the game to pause/resume.</p>
 
   <div class="stats">
     <div class="card">
@@ -148,8 +150,15 @@ let level = 1;
 let best = Number(localStorage.getItem("breakoutBest")) || 0;
 let paused = false;
 let animationId;
+let gameOver = false;
 
 document.getElementById("best").innerText = best;
+
+function safeSound(type) {
+  if (typeof playSound === "function") {
+    playSound(type);
+  }
+}
 
 document.addEventListener("keydown", keyDownHandler);
 document.addEventListener("keyup", keyUpHandler);
@@ -160,11 +169,10 @@ canvas.addEventListener("mousemove", function(e) {
   keepPaddleInBounds();
 });
 
-function safeSound(type) {
-  if (typeof playSound === "function") {
-    playSound(type);
-  }
-}
+// Click canvas to pause/resume
+canvas.addEventListener("click", function() {
+  togglePause();
+});
 
 function startGame() {
   x = canvas.width / 2;
@@ -174,6 +182,7 @@ function startGame() {
   paddleX = (canvas.width - paddleWidth) / 2;
   brickRowCount = 3 + level;
   paused = false;
+  gameOver = false;
 
   createBricks();
   updateStats();
@@ -194,6 +203,15 @@ function createBricks() {
 }
 
 function keyDownHandler(e) {
+  // Prevent page scrolling
+  if (
+    e.key === "ArrowLeft" ||
+    e.key === "ArrowRight" ||
+    e.key === " "
+  ) {
+    e.preventDefault();
+  }
+
   if (e.key === "Right" || e.key === "ArrowRight") rightPressed = true;
   if (e.key === "Left" || e.key === "ArrowLeft") leftPressed = true;
   if (e.key === " ") togglePause();
@@ -205,7 +223,10 @@ function keyUpHandler(e) {
 }
 
 function draw() {
+  if (gameOver) return;
+
   if (paused) {
+    drawPauseOverlay();
     animationId = requestAnimationFrame(draw);
     return;
   }
@@ -253,6 +274,23 @@ function draw() {
   animationId = requestAnimationFrame(draw);
 }
 
+function drawPauseOverlay() {
+  ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "white";
+  ctx.font = "bold 34px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("PAUSED", canvas.width / 2, canvas.height / 2);
+
+  ctx.font = "18px Arial";
+  ctx.fillText(
+    "Press Space or click to resume",
+    canvas.width / 2,
+    canvas.height / 2 + 35
+  );
+}
+
 function drawBall() {
   ctx.beginPath();
   ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
@@ -263,7 +301,12 @@ function drawBall() {
 
 function drawPaddle() {
   ctx.fillStyle = "#a78bfa";
-  ctx.fillRect(paddleX, canvas.height - paddleHeight - 10, paddleWidth, paddleHeight);
+  ctx.fillRect(
+    paddleX,
+    canvas.height - paddleHeight - 10,
+    paddleWidth,
+    paddleHeight
+  );
 }
 
 function drawBricks() {
@@ -326,16 +369,19 @@ function resetBall() {
 }
 
 function endGame() {
+  gameOver = true;
   cancelAnimationFrame(animationId);
 
   if (score > best) {
     best = score;
     localStorage.setItem("breakoutBest", best);
     safeSound("win");
-    document.getElementById("message").innerText = "🏆 New best score: " + score + "!";
+    document.getElementById("message").innerText =
+      "🏆 New best score: " + score + "!";
   } else {
     safeSound("lose");
-    document.getElementById("message").innerText = "Game over! Score: " + score;
+    document.getElementById("message").innerText =
+      "Game over! Score: " + score;
   }
 
   updateStats();
@@ -350,7 +396,9 @@ function restartGame() {
 }
 
 function togglePause() {
+  if (gameOver) return;
   paused = !paused;
+  safeSound("click");
 }
 
 function keepPaddleInBounds() {
