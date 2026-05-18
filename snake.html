@@ -149,25 +149,36 @@ function safeAchievement(id) {
 }
 
 document.addEventListener("keydown", function(e) {
+  // Prevent browser actions for game keys
   if (
     e.key === "ArrowUp" ||
     e.key === "ArrowDown" ||
     e.key === "ArrowLeft" ||
     e.key === "ArrowRight" ||
-    e.key === " "
+    e.key === " " ||
+    e.key === "Backspace"
   ) {
     e.preventDefault();
   }
 
+  // Movement
   if (e.key === "ArrowUp") setDirection("up");
   if (e.key === "ArrowDown") setDirection("down");
   if (e.key === "ArrowLeft") setDirection("left");
   if (e.key === "ArrowRight") setDirection("right");
-  if (e.key === " ") togglePause();
-});
 
-canvas.addEventListener("click", function() {
-  togglePause();
+  // Pause / Resume
+  if (e.key === " ") togglePause();
+
+  // Restart with R
+  if (e.key === "r" || e.key === "R") {
+    restartGame();
+  }
+
+  // Go back to Home with Backspace
+  if (e.key === "Backspace") {
+    window.location.href = "index.html";
+  }
 });
 
 function startGame() {
