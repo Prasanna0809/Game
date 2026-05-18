@@ -25,7 +25,11 @@
       max-width: 520px;
     }
 
-    h1 { margin-top: 0; color: #047857; }
+    h1 {
+      margin-top: 0;
+      color: #047857;
+      cursor: pointer;
+    }
 
     .stats {
       display: flex;
@@ -41,7 +45,10 @@
       flex: 1;
     }
 
-    .card h2 { margin: 0; color: #047857; }
+    .card h2 {
+      margin: 0;
+      color: #047857;
+    }
 
     canvas {
       background: #111827;
@@ -64,9 +71,13 @@
       cursor: pointer;
     }
 
-    button:hover, a:hover { background: #059669; }
+    button:hover, a:hover {
+      background: #059669;
+    }
 
-    .controls { margin-top: 15px; }
+    .controls {
+      margin-top: 15px;
+    }
 
     .mobile-controls {
       display: grid;
@@ -81,19 +92,35 @@
       padding: 12px;
       font-size: 20px;
     }
+
+    #startText {
+      font-weight: bold;
+      color: #047857;
+    }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h1>🐍 Snake Master</h1>
+  <h1 id="gameTitle">🐍 Snake Master</h1>
+  <p id="startText">Click the Snake logo to start</p>
   <p>Use arrow keys or mobile buttons to move.</p>
   <p><strong>Tip:</strong> Press Space or click the game to pause/resume.</p>
+  <p><strong>Shortcuts:</strong> R = Restart, Backspace = Home</p>
 
   <div class="stats">
-    <div class="card"><h2 id="score">0</h2><p>Score</p></div>
-    <div class="card"><h2 id="best">0</h2><p>Best</p></div>
-    <div class="card"><h2 id="level">1</h2><p>Level</p></div>
+    <div class="card">
+      <h2 id="score">0</h2>
+      <p>Score</p>
+    </div>
+    <div class="card">
+      <h2 id="best">0</h2>
+      <p>Best</p>
+    </div>
+    <div class="card">
+      <h2 id="level">1</h2>
+      <p>Level</p>
+    </div>
   </div>
 
   <canvas id="game" width="400" height="400"></canvas>
@@ -133,6 +160,7 @@ let speed;
 let gameInterval;
 let paused = false;
 let gameOver = false;
+let gameStarted = false;
 
 document.getElementById("best").innerText = bestScore;
 
@@ -149,7 +177,6 @@ function safeAchievement(id) {
 }
 
 document.addEventListener("keydown", function(e) {
-  // Prevent browser actions for game keys
   if (
     e.key === "ArrowUp" ||
     e.key === "ArrowDown" ||
@@ -161,28 +188,60 @@ document.addEventListener("keydown", function(e) {
     e.preventDefault();
   }
 
-  // Movement
+  if (!gameStarted && e.key !== "Backspace") {
+    return;
+  }
+
   if (e.key === "ArrowUp") setDirection("up");
   if (e.key === "ArrowDown") setDirection("down");
   if (e.key === "ArrowLeft") setDirection("left");
   if (e.key === "ArrowRight") setDirection("right");
 
-  // Pause / Resume
   if (e.key === " ") togglePause();
 
-  // Restart with R
   if (e.key === "r" || e.key === "R") {
     restartGame();
   }
 
-  // Go back to Home with Backspace
   if (e.key === "Backspace") {
     window.location.href = "index.html";
   }
 });
 
+canvas.addEventListener("click", function() {
+  if (!gameStarted) {
+    startGame();
+  } else {
+    togglePause();
+  }
+});
+
+document.getElementById("gameTitle").addEventListener("click", function() {
+  startGame();
+});
+
+function showStartScreen() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawGrid();
+
+  ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "white";
+  ctx.font = "bold 42px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("▶ START", canvas.width / 2, canvas.height / 2 - 10);
+
+  ctx.font = "18px Arial";
+  ctx.fillText("Click the Snake logo above", canvas.width / 2, canvas.height / 2 + 30);
+}
+
 function startGame() {
   safeAchievement("first_game");
+  safeSound("click");
+
+  gameStarted = true;
+  document.getElementById("startText").innerText = "Game started!";
 
   snake = [{ x: 200, y: 200 }];
   food = randomFood();
@@ -199,26 +258,37 @@ function startGame() {
 
   clearInterval(gameInterval);
   gameInterval = setInterval(draw, speed);
+  drawGame();
 }
 
 function setDirection(direction) {
   let changed = false;
 
   if (direction === "up" && dy === 0) {
-    dx = 0; dy = -box; changed = true;
+    dx = 0;
+    dy = -box;
+    changed = true;
   } else if (direction === "down" && dy === 0) {
-    dx = 0; dy = box; changed = true;
+    dx = 0;
+    dy = box;
+    changed = true;
   } else if (direction === "left" && dx === 0) {
-    dx = -box; dy = 0; changed = true;
+    dx = -box;
+    dy = 0;
+    changed = true;
   } else if (direction === "right" && dx === 0) {
-    dx = box; dy = 0; changed = true;
+    dx = box;
+    dy = 0;
+    changed = true;
   }
 
-  if (changed) safeSound("click");
+  if (changed) {
+    safeSound("click");
+  }
 }
 
 function draw() {
-  if (gameOver) return;
+  if (gameOver || !gameStarted) return;
 
   if (paused) {
     drawPauseOverlay();
@@ -230,8 +300,6 @@ function draw() {
     y: snake[0].y + dy
   };
 
-  // FIXED: Allows snake to fully enter the last valid block.
-  // Last valid block is x/y = 380 on a 400 canvas with 20px blocks.
   if (
     head.x < 0 ||
     head.x > canvas.width - box ||
@@ -342,10 +410,13 @@ function randomFood() {
 
 function endGame() {
   gameOver = true;
+  gameStarted = false;
   clearInterval(gameInterval);
   safeSound("lose");
   drawGame();
   alert("Game Over! Score: " + score);
+  document.getElementById("startText").innerText = "Click the Snake logo to start again";
+  showStartScreen();
 }
 
 function restartGame() {
@@ -353,7 +424,8 @@ function restartGame() {
 }
 
 function togglePause() {
-  if (gameOver) return;
+  if (gameOver || !gameStarted) return;
+
   paused = !paused;
   safeSound("click");
 
@@ -362,7 +434,7 @@ function togglePause() {
   }
 }
 
-startGame();
+showStartScreen();
 </script>
 
 </body>
