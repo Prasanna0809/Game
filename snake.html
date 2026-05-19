@@ -188,9 +188,14 @@ document.addEventListener("keydown", function(e) {
     e.preventDefault();
   }
 
-  if (!gameStarted && e.key !== "Backspace") {
-    return;
-  }
+  if (!gameStarted && e.key === " ") {
+  startGame();
+  return;
+}
+
+if (!gameStarted && e.key !== "Backspace") {
+  return;
+}
 
   if (e.key === "ArrowUp") setDirection("up");
   if (e.key === "ArrowDown") setDirection("down");
