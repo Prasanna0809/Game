@@ -29,6 +29,7 @@
     h1 {
       color: #2563eb;
       margin-top: 0;
+      cursor: pointer;
     }
 
     .stats {
@@ -105,9 +106,10 @@
 <body>
 
 <div class="container">
-  <h1>🏓 Vertical Pong Pro</h1>
+  <h1 id="gameTitle">🏓 Vertical Pong Pro</h1>
+  <p id="startText"><strong>Press Space or click the game to start.</strong></p>
   <p>Computer is on top. You are at the bottom. Move left and right!</p>
-  <p><strong>Tip:</strong> Press Space or click the game to pause/resume.</p>
+  <p><strong>Controls:</strong> Space = Start/Pause, R = Restart, Backspace = Home</p>
 
   <label for="difficulty">Difficulty:</label>
   <select id="difficulty" onchange="restartGame()">
@@ -165,12 +167,13 @@ let ballDX;
 let ballDY;
 let ballRadius = 10;
 
-let playerScore;
-let computerScore;
+let playerScore = 0;
+let computerScore = 0;
 let winStreak = 0;
 let bestScore = Number(localStorage.getItem("verticalPongBestScore")) || 0;
 
 let paused = false;
+let gameStarted = false;
 let animationId;
 let computerSpeed = 0.08;
 
@@ -190,14 +193,32 @@ document.addEventListener("keydown", function(e) {
   if (
     e.key === "ArrowLeft" ||
     e.key === "ArrowRight" ||
-    e.key === " "
+    e.key === " " ||
+    e.key === "Backspace"
   ) {
     e.preventDefault();
   }
 
+  if (e.key === "Backspace") {
+    window.location.href = "index.html";
+  }
+
+  if (e.key === "r" || e.key === "R") {
+    restartGame();
+  }
+
+  if (e.key === " ") {
+    if (!gameStarted) {
+      startGame();
+    } else {
+      togglePause();
+    }
+  }
+
+  if (!gameStarted) return;
+
   if (e.key === "ArrowLeft") leftPressed = true;
   if (e.key === "ArrowRight") rightPressed = true;
-  if (e.key === " ") togglePause();
 });
 
 document.addEventListener("keyup", function(e) {
@@ -206,14 +227,42 @@ document.addEventListener("keyup", function(e) {
 });
 
 canvas.addEventListener("mousemove", function(e) {
+  if (!gameStarted || paused) return;
+
   const rect = canvas.getBoundingClientRect();
   playerX = e.clientX - rect.left - paddleW / 2;
   keepPlayerInBounds();
 });
 
 canvas.addEventListener("click", function() {
-  togglePause();
+  if (!gameStarted) {
+    startGame();
+  } else {
+    togglePause();
+  }
 });
+
+document.getElementById("gameTitle").addEventListener("click", function() {
+  if (!gameStarted) {
+    startGame();
+  }
+});
+
+function showStartScreen() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawCourt();
+
+  ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "white";
+  ctx.font = "bold 42px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("▶ START", canvas.width / 2, canvas.height / 2 - 10);
+
+  ctx.font = "18px Arial";
+  ctx.fillText("Press Space or click the game", canvas.width / 2, canvas.height / 2 + 30);
+}
 
 function setDifficulty() {
   const difficulty = document.getElementById("difficulty").value;
@@ -230,6 +279,9 @@ function setDifficulty() {
 function startGame() {
   setDifficulty();
 
+  gameStarted = true;
+  paused = false;
+
   playerX = canvas.width / 2 - paddleW / 2;
   computerX = canvas.width / 2 - paddleW / 2;
 
@@ -241,19 +293,22 @@ function startGame() {
   playerScore = 0;
   computerScore = 0;
   winStreak = 0;
-  paused = false;
   leftPressed = false;
   rightPressed = false;
 
+  document.getElementById("startText").innerText = "Game started!";
   document.getElementById("message").innerText = "";
 
   updateScore();
 
   cancelAnimationFrame(animationId);
   draw();
+  safeSound("click");
 }
 
 function draw() {
+  if (!gameStarted) return;
+
   if (paused) {
     drawPauseOverlay();
     animationId = requestAnimationFrame(draw);
@@ -404,6 +459,11 @@ function updateScore() {
 }
 
 function movePlayer(amount) {
+  if (!gameStarted) {
+    startGame();
+    return;
+  }
+
   playerX += amount;
   keepPlayerInBounds();
   safeSound("click");
@@ -417,16 +477,20 @@ function keepPlayerInBounds() {
 }
 
 function restartGame() {
-  document.getElementById("message").innerText = "";
   startGame();
 }
 
 function togglePause() {
+  if (!gameStarted) {
+    startGame();
+    return;
+  }
+
   paused = !paused;
   safeSound("click");
 }
 
-startGame();
+showStartScreen();
 </script>
 
 </body>
