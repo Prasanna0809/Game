@@ -107,11 +107,24 @@
 
 <div class="container">
   <h1 id="gameTitle">🏓 Vertical Pong Pro</h1>
-  <p id="startText"><strong>Press Space or click the game to start.</strong></p>
-  <p>Computer is on top. You are at the bottom. Move left and right!</p>
-  <p><strong>Controls:</strong> Space = Start/Pause, R = Restart, Backspace = Home</p>
+
+  <p id="startText">
+    <strong>Press Space or click the game to start.</strong>
+  </p>
+
+  <p>Computer is on top. You are at the bottom.</p>
+
+  <p>
+    <strong>
+      Controls:
+      Space = Start/Pause,
+      R = Restart,
+      Backspace = Home
+    </strong>
+  </p>
 
   <label for="difficulty">Difficulty:</label>
+
   <select id="difficulty" onchange="restartGame()">
     <option value="easy">Easy</option>
     <option value="medium" selected>Medium</option>
@@ -119,18 +132,27 @@
   </select>
 
   <div class="stats">
+
     <div class="card">
       <h2 id="playerScore">0</h2>
       <p>Player</p>
     </div>
+
     <div class="card">
       <h2 id="computerScore">0</h2>
       <p>Computer</p>
     </div>
+
     <div class="card">
       <h2 id="bestScore">0</h2>
-      <p>Best Streak</p>
+      <p>Best</p>
     </div>
+
+    <div class="card">
+      <h2 id="level">1</h2>
+      <p>Level</p>
+    </div>
+
   </div>
 
   <canvas id="game" width="600" height="400"></canvas>
@@ -169,12 +191,17 @@ let ballRadius = 10;
 
 let playerScore = 0;
 let computerScore = 0;
-let winStreak = 0;
-let bestScore = Number(localStorage.getItem("verticalPongBestScore")) || 0;
+
+let bestScore =
+  Number(localStorage.getItem("verticalPongBestScore")) || 0;
+
+let level = 1;
+let levelGoal = 10;
 
 let paused = false;
 let gameStarted = false;
 let animationId;
+
 let computerSpeed = 0.08;
 
 let leftPressed = false;
@@ -190,6 +217,7 @@ function safeSound(type) {
 }
 
 document.addEventListener("keydown", function(e) {
+
   if (
     e.key === "ArrowLeft" ||
     e.key === "ArrowRight" ||
@@ -199,15 +227,19 @@ document.addEventListener("keydown", function(e) {
     e.preventDefault();
   }
 
+  // Home
   if (e.key === "Backspace") {
     window.location.href = "index.html";
   }
 
+  // Restart
   if (e.key === "r" || e.key === "R") {
     restartGame();
   }
 
+  // Space Start / Pause
   if (e.key === " ") {
+
     if (!gameStarted) {
       startGame();
     } else {
@@ -217,24 +249,40 @@ document.addEventListener("keydown", function(e) {
 
   if (!gameStarted) return;
 
-  if (e.key === "ArrowLeft") leftPressed = true;
-  if (e.key === "ArrowRight") rightPressed = true;
+  if (e.key === "ArrowLeft") {
+    leftPressed = true;
+  }
+
+  if (e.key === "ArrowRight") {
+    rightPressed = true;
+  }
 });
 
 document.addEventListener("keyup", function(e) {
-  if (e.key === "ArrowLeft") leftPressed = false;
-  if (e.key === "ArrowRight") rightPressed = false;
+
+  if (e.key === "ArrowLeft") {
+    leftPressed = false;
+  }
+
+  if (e.key === "ArrowRight") {
+    rightPressed = false;
+  }
 });
 
 canvas.addEventListener("mousemove", function(e) {
+
   if (!gameStarted || paused) return;
 
   const rect = canvas.getBoundingClientRect();
+
   playerX = e.clientX - rect.left - paddleW / 2;
+
   keepPlayerInBounds();
 });
 
+// Click canvas = Start or Pause
 canvas.addEventListener("click", function() {
+
   if (!gameStarted) {
     startGame();
   } else {
@@ -242,41 +290,61 @@ canvas.addEventListener("click", function() {
   }
 });
 
-document.getElementById("gameTitle").addEventListener("click", function() {
+// Click title = Start
+document.getElementById("gameTitle")
+.addEventListener("click", function() {
+
   if (!gameStarted) {
     startGame();
   }
 });
 
 function showStartScreen() {
+
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
   drawCourt();
 
-  ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+  ctx.fillStyle = "rgba(0,0,0,0.55)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   ctx.fillStyle = "white";
   ctx.font = "bold 42px Arial";
   ctx.textAlign = "center";
-  ctx.fillText("▶ START", canvas.width / 2, canvas.height / 2 - 10);
+
+  ctx.fillText(
+    "▶ START",
+    canvas.width / 2,
+    canvas.height / 2 - 10
+  );
 
   ctx.font = "18px Arial";
-  ctx.fillText("Press Space or click the game", canvas.width / 2, canvas.height / 2 + 30);
+
+  ctx.fillText(
+    "Press Space or click the game",
+    canvas.width / 2,
+    canvas.height / 2 + 30
+  );
 }
 
 function setDifficulty() {
-  const difficulty = document.getElementById("difficulty").value;
+
+  const difficulty =
+    document.getElementById("difficulty").value;
 
   if (difficulty === "easy") {
     computerSpeed = 0.05;
-  } else if (difficulty === "hard") {
+  }
+  else if (difficulty === "hard") {
     computerSpeed = 0.13;
-  } else {
+  }
+  else {
     computerSpeed = 0.08;
   }
 }
 
 function startGame() {
+
   setDifficulty();
 
   gameStarted = true;
@@ -287,31 +355,47 @@ function startGame() {
 
   ballX = canvas.width / 2;
   ballY = canvas.height / 2;
+
   ballDX = 3;
   ballDY = 4;
 
   playerScore = 0;
   computerScore = 0;
-  winStreak = 0;
+
+  level = 1;
+  levelGoal = 10;
+
+  document.getElementById("level").innerText = level;
+
   leftPressed = false;
   rightPressed = false;
 
-  document.getElementById("startText").innerText = "Game started!";
-  document.getElementById("message").innerText = "";
+  document.getElementById("startText").innerText =
+    "Game started!";
+
+  document.getElementById("message").innerText =
+    "Reach 10 points for Level 2!";
 
   updateScore();
 
   cancelAnimationFrame(animationId);
+
   draw();
+
   safeSound("click");
 }
 
 function draw() {
+
   if (!gameStarted) return;
 
   if (paused) {
+
     drawPauseOverlay();
-    animationId = requestAnimationFrame(draw);
+
+    animationId =
+      requestAnimationFrame(draw);
+
     return;
   }
 
@@ -329,10 +413,12 @@ function draw() {
 
   updateScore();
 
-  animationId = requestAnimationFrame(draw);
+  animationId =
+    requestAnimationFrame(draw);
 }
 
 function movePlayerSmooth() {
+
   if (leftPressed) {
     playerX -= paddleSpeed;
   }
@@ -345,134 +431,257 @@ function movePlayerSmooth() {
 }
 
 function drawCourt() {
+
   ctx.strokeStyle = "#334155";
+
   ctx.setLineDash([10, 10]);
+
   ctx.beginPath();
   ctx.moveTo(0, canvas.height / 2);
   ctx.lineTo(canvas.width, canvas.height / 2);
   ctx.stroke();
+
   ctx.setLineDash([]);
 }
 
 function drawPaddles() {
+
   ctx.fillStyle = "#f97316";
-  ctx.fillRect(computerX, 20, paddleW, paddleH);
+
+  ctx.fillRect(
+    computerX,
+    20,
+    paddleW,
+    paddleH
+  );
 
   ctx.fillStyle = "#38bdf8";
-  ctx.fillRect(playerX, canvas.height - 32, paddleW, paddleH);
+
+  ctx.fillRect(
+    playerX,
+    canvas.height - 32,
+    paddleW,
+    paddleH
+  );
 }
 
 function drawBall() {
+
   ctx.fillStyle = "white";
+
   ctx.beginPath();
-  ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
+
+  ctx.arc(
+    ballX,
+    ballY,
+    ballRadius,
+    0,
+    Math.PI * 2
+  );
+
   ctx.fill();
 }
 
 function drawPauseOverlay() {
-  ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "rgba(0,0,0,0.45)";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
 
   ctx.fillStyle = "white";
+
   ctx.font = "bold 34px Arial";
+
   ctx.textAlign = "center";
-  ctx.fillText("PAUSED", canvas.width / 2, canvas.height / 2);
+
+  ctx.fillText(
+    "PAUSED",
+    canvas.width / 2,
+    canvas.height / 2
+  );
 
   ctx.font = "18px Arial";
-  ctx.fillText("Press Space or click to resume", canvas.width / 2, canvas.height / 2 + 35);
+
+  ctx.fillText(
+    "Press Space or click to resume",
+    canvas.width / 2,
+    canvas.height / 2 + 35
+  );
 }
 
 function moveBall() {
+
   ballX += ballDX;
   ballY += ballDY;
 
-  if (ballX < ballRadius || ballX > canvas.width - ballRadius) {
+  if (
+    ballX < ballRadius ||
+    ballX > canvas.width - ballRadius
+  ) {
     ballDX *= -1;
   }
 }
 
 function moveComputer() {
-  computerX += (ballX - (computerX + paddleW / 2)) * computerSpeed;
 
-  if (computerX < 0) computerX = 0;
+  computerX +=
+    (ballX - (computerX + paddleW / 2))
+    * computerSpeed;
+
+  if (computerX < 0) {
+    computerX = 0;
+  }
+
   if (computerX + paddleW > canvas.width) {
     computerX = canvas.width - paddleW;
   }
 }
 
 function checkCollisions() {
+
+  // Top paddle
   if (
     ballY - ballRadius < 20 + paddleH &&
     ballX > computerX &&
     ballX < computerX + paddleW
   ) {
+
     ballDY = Math.abs(ballDY) + 0.15;
-    ballDX += (ballX - (computerX + paddleW / 2)) * 0.04;
+
+    ballDX +=
+      (ballX - (computerX + paddleW / 2))
+      * 0.04;
+
     safeSound("click");
   }
 
+  // Bottom paddle
   if (
-    ballY + ballRadius > canvas.height - 32 &&
+    ballY + ballRadius >
+    canvas.height - 32 &&
     ballX > playerX &&
     ballX < playerX + paddleW
   ) {
+
     ballDY = -Math.abs(ballDY) - 0.15;
-    ballDX += (ballX - (playerX + paddleW / 2)) * 0.04;
+
+    ballDX +=
+      (ballX - (playerX + paddleW / 2))
+      * 0.04;
+
     safeSound("click");
   }
 
+  // Player scores
   if (ballY < 0) {
+
     playerScore++;
-    winStreak++;
-    document.getElementById("message").innerText = "You scored! 🔥";
+
+    document.getElementById("message").innerText =
+      "You scored! 🔥";
+
     safeSound("score");
 
-    if (winStreak > bestScore) {
-      bestScore = winStreak;
-      localStorage.setItem("verticalPongBestScore", bestScore);
-      document.getElementById("bestScore").innerText = bestScore;
+    // LEVEL SYSTEM
+    if (playerScore >= levelGoal) {
+
+      level++;
+
+      levelGoal = level * 10;
+
+      computerSpeed += 0.02;
+
+      document.getElementById("level").innerText =
+        level;
+
+      document.getElementById("message").innerText =
+        "🚀 Level " +
+        level +
+        "! Reach " +
+        levelGoal +
+        " points!";
+
+      safeSound("win");
+    }
+
+    // Best score
+    if (playerScore > bestScore) {
+
+      bestScore = playerScore;
+
+      localStorage.setItem(
+        "verticalPongBestScore",
+        bestScore
+      );
+
+      document.getElementById("bestScore")
+      .innerText = bestScore;
+
       safeSound("win");
     }
 
     resetBall(1);
   }
 
+  // Computer scores
   if (ballY > canvas.height) {
+
     computerScore++;
-    winStreak = 0;
-    document.getElementById("message").innerText = "Computer scored!";
+
+    document.getElementById("message").innerText =
+      "Computer scored!";
+
     safeSound("lose");
+
     resetBall(-1);
   }
 }
 
 function resetBall(direction) {
+
   ballX = canvas.width / 2;
   ballY = canvas.height / 2;
-  ballDX = Math.random() > 0.5 ? 3 : -3;
+
+  ballDX =
+    Math.random() > 0.5 ? 3 : -3;
+
   ballDY = 4 * direction;
 }
 
 function updateScore() {
-  document.getElementById("playerScore").innerText = playerScore;
-  document.getElementById("computerScore").innerText = computerScore;
+
+  document.getElementById("playerScore")
+  .innerText = playerScore;
+
+  document.getElementById("computerScore")
+  .innerText = computerScore;
 }
 
 function movePlayer(amount) {
+
   if (!gameStarted) {
     startGame();
     return;
   }
 
   playerX += amount;
+
   keepPlayerInBounds();
+
   safeSound("click");
 }
 
 function keepPlayerInBounds() {
-  if (playerX < 0) playerX = 0;
-  if (playerX + paddleW > canvas.width) {
-    playerX = canvas.width - paddleW;
+
+  if (playerX < 0) {
+    playerX = 0;
+  }
+
+  if (
+    playerX + paddleW >
+    canvas.width
+  ) {
+    playerX =
+      canvas.width - paddleW;
   }
 }
 
@@ -481,12 +690,14 @@ function restartGame() {
 }
 
 function togglePause() {
+
   if (!gameStarted) {
     startGame();
     return;
   }
 
   paused = !paused;
+
   safeSound("click");
 }
 
